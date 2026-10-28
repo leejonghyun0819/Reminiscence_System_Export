@@ -1,6 +1,6 @@
 // frontend/features/index/GalleryViewerModal.tsx
 import React from 'react';
-import { Modal, View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { Modal, View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform } from 'react-native';
 import { MemoryItem, useMemory } from '../../context/MemoryContext';
 
 interface GalleryViewerModalProps {
@@ -20,9 +20,7 @@ export const GalleryViewerModal: React.FC<GalleryViewerModalProps> = ({ visible,
             return;
         }
 
-        const confirmed = window.confirm ? window.confirm(`${index + 1}번째 사진을 앨범에서 삭제하시겠습니까?`) : true;
-
-        if (confirmed) {
+        const removePhoto = () => {
             deleteSingleImage(album.id, targetUrl)
                 .then((success) => {
                     if (success) {
@@ -34,7 +32,17 @@ export const GalleryViewerModal: React.FC<GalleryViewerModalProps> = ({ visible,
                 .catch((e) => {
                     alert(`삭제 중 오류 발생: ${e.message}`);
                 });
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm(`${index + 1}번째 사진을 앨범에서 삭제하시겠습니까?`)) removePhoto();
+            return;
         }
+
+        Alert.alert('사진 삭제', `${index + 1}번째 사진을 앨범에서 삭제하시겠습니까?`, [
+            { text: '취소', style: 'cancel' },
+            { text: '삭제', style: 'destructive', onPress: removePhoto },
+        ]);
     };
 
     return (

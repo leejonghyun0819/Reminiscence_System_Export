@@ -16,7 +16,6 @@ export default function RootLayout() {
         <MemoryProvider>
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="backup" options={{ headerShown: false }} />
             </Stack>
         </MemoryProvider>
     );
