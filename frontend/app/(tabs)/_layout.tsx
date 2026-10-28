@@ -12,8 +12,23 @@ export default function TabLayout() {
         <Tabs
             screenOptions={{
                 tabBarActiveTintColor: Colors[colorScheme].tint,
+                tabBarInactiveTintColor: '#94A3B8',
                 headerShown: false,
-                tabBarStyle: Platform.OS === 'web' ? { display: 'none' } : undefined,
+                sceneStyle: { backgroundColor: '#F8FAFC' },
+                tabBarStyle:
+                    Platform.OS === 'web'
+                        ? { display: 'none' }
+                        : {
+                              height: 84,
+                              paddingTop: 8,
+                              paddingBottom: 12,
+                              borderTopColor: '#E2E8F0',
+                              backgroundColor: '#FFFFFF',
+                          },
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontWeight: '700',
+                },
             }}
         >
             <Tabs.Screen
@@ -60,6 +75,23 @@ export default function TabLayout() {
                                 ios: 'square.and.pencil',
                                 android: 'edit_note',
                                 web: 'edit_note',
+                            }}
+                            tintColor={color}
+                            size={24}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="backup"
+                options={{
+                    title: '보관함',
+                    tabBarIcon: ({ color }) => (
+                        <SymbolView
+                            name={{
+                                ios: 'archivebox',
+                                android: 'inventory_2',
+                                web: 'inventory_2',
                             }}
                             tintColor={color}
                             size={24}
