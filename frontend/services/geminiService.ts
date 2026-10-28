@@ -1,4 +1,5 @@
 import { MemoryContextData } from '../types/memoryContext';
+import { API_BASE_URL as BASE_URL } from '../config/api';
 
 export type MemoryMode = 'childhood' | 'travel';
 
@@ -81,8 +82,6 @@ export interface GeneratedMemoryBookNote {
     sourceMemoryIds: string[];
     style: GeneratedNoteStyle;
 }
-
-const BASE_URL = 'http://localhost:8000';
 
 async function getErrorMessage(response: Response, fallback: string): Promise<string> {
     const errorBody = await response.json().catch(() => ({}));

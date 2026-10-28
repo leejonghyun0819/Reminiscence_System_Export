@@ -23,8 +23,7 @@ import { isVideoUrl } from '../utils/mediaProcessUtils';
 import { MemoryAppHeader } from '../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../components/MemoryPageHeader';
 import { memoryColors, memoryLayout } from '../constants/memoryTheme';
-
-const BACKEND_URL = 'http://localhost:8000';
+import { API_BASE_URL as BACKEND_URL, resolveBackendMediaUrls } from '../config/api';
 
 export interface ExtendedBackupAlbumMeta extends BackupAlbumMeta {
     mode?: 'travel' | 'childhood';
@@ -120,7 +119,7 @@ export default function BackupPage({ onClose }: { onClose?: () => void }) {
             ]);
 
             if (albumsRes.ok) {
-                const loadedAlbums: ExtendedBackupAlbumMeta[] = await albumsRes.json();
+                const loadedAlbums = resolveBackendMediaUrls<ExtendedBackupAlbumMeta[]>(await albumsRes.json());
                 setBackupAlbums(loadedAlbums);
             } else {
                 setFetchError(true);
@@ -301,7 +300,7 @@ export default function BackupPage({ onClose }: { onClose?: () => void }) {
             });
             if (res.ok) {
                 const data = await res.json();
-                appendActiveMemory(data.restoredItem);
+                appendActiveMemory(resolveBackendMediaUrls(data.restoredItem));
                 alert('✨ 현재 작업 화면(홈)으로 추억 앨범이 성공적으로 복원되었습니다!');
                 handleCloseOrBack();
             } else alert('복원에 실패했습니다.');
@@ -401,7 +400,7 @@ export default function BackupPage({ onClose }: { onClose?: () => void }) {
 
             if (res.ok) {
                 const data = await res.json();
-                appendActiveMemories(data.restoredItems);
+                appendActiveMemories(resolveBackendMediaUrls(data.restoredItems));
                 alert(`✨ 선택한 ${data.restoredItems.length}개의 앨범이 복원되었습니다!`);
                 setSelectedAlbumIds(new Set());
                 handleCloseOrBack();

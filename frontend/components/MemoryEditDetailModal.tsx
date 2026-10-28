@@ -13,6 +13,7 @@ import {
     Image,
 } from 'react-native';
 import { MemoryItem } from '../context/MemoryContext';
+import { API_BASE_URL as BACKEND_URL } from '../config/api';
 
 interface MemoryEditDetailModalProps {
     visible: boolean;
@@ -20,8 +21,6 @@ interface MemoryEditDetailModalProps {
     onClose: () => void;
     onSaveSuccess: (updatedMemory: MemoryItem) => void;
 }
-
-const BACKEND_URL = 'http://localhost:8000';
 
 export function MemoryEditDetailModal({ visible, memory, onClose, onSaveSuccess }: MemoryEditDetailModalProps) {
     const [isSaving, setIsSaving] = useState(false);

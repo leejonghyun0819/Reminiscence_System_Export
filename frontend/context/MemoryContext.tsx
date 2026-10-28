@@ -1,8 +1,11 @@
 // frontend/context/MemoryContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { MemoryContextData } from '../types/memoryContext';
-
-const BACKEND_URL = 'http://localhost:8000';
+import {
+    API_BASE_URL as BACKEND_URL,
+    resolveBackendMediaUrls,
+    toBackendStoredMediaUrl,
+} from '../config/api';
 
 export interface AnalysisData {
     title?: string;
@@ -223,7 +226,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
             const res = await fetch(`${BACKEND_URL}/api/memories`);
             if (res.ok) {
-                const data: MemoryItem[] = await res.json();
+                const data = resolveBackendMediaUrls<MemoryItem[]>(await res.json());
                 setMemoryList(data);
                 if (data.length > 0 && !selectedEnhanceMemory) {
                     setSelectedEnhanceMemory(data[0]);
@@ -238,7 +241,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
             const res = await fetch(`${BACKEND_URL}/api/generated-notes`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data: MemoryItem[] = await res.json();
+            const data = resolveBackendMediaUrls<MemoryItem[]>(await res.json());
             setGeneratedNotes(Array.isArray(data) ? data : []);
         } catch (e) {
             console.error('생성 노트 로딩 실패:', e);
@@ -345,7 +348,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 throw new Error(`서버 저장 실패 (${postRes.status}): ${errorText}`);
             }
 
-            const savedItem: MemoryItem = await postRes.json();
+            const savedItem = resolveBackendMediaUrls<MemoryItem>(await postRes.json());
             setMemoryList((prev) => [savedItem, ...prev]);
             setSelectedEnhanceMemory(savedItem);
             return savedItem;
@@ -370,7 +373,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             });
 
             if (postRes.ok) {
-                const data = await postRes.json();
+                const data = resolveBackendMediaUrls<any>(await postRes.json());
                 setMemoryList((prev) =>
                     prev.map((m) =>
                         m.id === memoryId ? { ...m, imageUrls: data.imageUrls, fileNames: data.fileNames } : m,
@@ -442,7 +445,10 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const res = await fetch(`${BACKEND_URL}/api/memories/${memoryId}/swap-image`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldUrl, newUrl }),
+                body: JSON.stringify({
+                    oldUrl: toBackendStoredMediaUrl(oldUrl),
+                    newUrl: toBackendStoredMediaUrl(newUrl),
+                }),
             });
             if (res.ok) {
                 const updateUrls = (urls: string[]) => urls.map((u) => (u === oldUrl ? newUrl : u));
@@ -468,10 +474,10 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const res = await fetch(`${BACKEND_URL}/api/memories/${memoryId}/append-image-url`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageUrl }),
+                body: JSON.stringify({ imageUrl: toBackendStoredMediaUrl(imageUrl) }),
             });
             if (res.ok) {
-                const data = await res.json();
+                const data = resolveBackendMediaUrls<any>(await res.json());
                 setMemoryList((prev) => prev.map((m) => (m.id === memoryId ? { ...m, imageUrls: data.imageUrls } : m)));
                 return true;
             }
@@ -487,10 +493,10 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const res = await fetch(`${BACKEND_URL}/api/memories/${memoryId}/image`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetImageUrl }),
+                body: JSON.stringify({ targetImageUrl: toBackendStoredMediaUrl(targetImageUrl) }),
             });
             if (res.ok) {
-                const data = await res.json();
+                const data = resolveBackendMediaUrls<any>(await res.json());
                 setMemoryList((prev) =>
                     prev.map((m) =>
                         m.id === memoryId ? { ...m, imageUrls: data.imageUrls, fileNames: data.fileNames } : m,
@@ -565,13 +571,16 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     const appendActiveMemory = (memory: MemoryItem) => {
-        setMemoryList((prev) => (prev.some((m) => m.id === memory.id) ? prev : [memory, ...prev]));
+        const resolvedMemory = resolveBackendMediaUrls(memory);
+        setMemoryList((prev) =>
+            prev.some((m) => m.id === resolvedMemory.id) ? prev : [resolvedMemory, ...prev],
+        );
     };
 
     const appendActiveMemories = (memories: MemoryItem[]) => {
         setMemoryList((prev) => {
             const existingIds = new Set(prev.map((m) => m.id));
-            const filtered = memories.filter((m) => !existingIds.has(m.id));
+            const filtered = resolveBackendMediaUrls(memories).filter((m) => !existingIds.has(m.id));
             return [...filtered, ...prev];
         });
     };
