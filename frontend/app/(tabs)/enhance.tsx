@@ -17,8 +17,11 @@ import { EnhanceAlbumSelector } from '../../features/enhance/EnhanceAlbumSelecto
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
 import { memoryColors, memoryLayout } from '../../constants/memoryTheme';
-
-const BACKEND_URL = 'http://localhost:8000';
+import {
+    API_BASE_URL as BACKEND_URL,
+    resolveBackendMediaUrl,
+    toBackendStoredMediaUrl,
+} from '../../config/api';
 
 export default function EnhanceScreen() {
     const { width } = useWindowDimensions();
@@ -55,7 +58,7 @@ export default function EnhanceScreen() {
         setIsProcessing(true);
         try {
             const formData = new FormData();
-            formData.append('targetImageUrl', currentImageUrl);
+            formData.append('targetImageUrl', toBackendStoredMediaUrl(currentImageUrl));
 
             const endpoint =
                 activeMode === 'colorize'
@@ -73,7 +76,7 @@ export default function EnhanceScreen() {
             }
 
             const data = await res.json();
-            setEnhancedResultUrl(data.newUrl);
+            setEnhancedResultUrl(resolveBackendMediaUrl(data.newUrl));
         } catch (e: any) {
             const modeName = activeMode === 'colorize' ? '흑백 컬러 복원' : '화질 개선';
             alert(`YouCam AI ${modeName} 중 오류가 발생했습니다:\n${e.message}`);
