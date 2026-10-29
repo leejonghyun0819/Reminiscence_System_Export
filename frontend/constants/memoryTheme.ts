@@ -11,6 +11,7 @@ export const memoryColors = {
     textFaint: '#94A3B8',
     subtle: '#F1F5F9',
     brand: '#0284C7',
+    brandTint: '#2F95DC',
     brandDark: '#0369A1',
     brandLight: '#F0F9FF',
     brandBorder: '#BAE6FD',

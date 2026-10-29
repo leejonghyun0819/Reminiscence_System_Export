@@ -26,6 +26,8 @@ import {
     MEMORY_PURPOSE_LABELS,
 } from '../types/memoryContext';
 import { memoryColors, memoryFontFamily } from '../constants/memoryTheme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MobileScreenHeader } from './mobile/MobileScreenHeader';
 
 interface FactsAndClues {
     estimatedEra?: string;
@@ -74,6 +76,7 @@ export function MemoryInterviewModal({
 }: MemoryInterviewModalProps) {
     const { width } = useWindowDimensions();
     const isCompact = width < 900;
+    const isPhone = width < 600;
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [extraStory, setExtraStory] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -192,8 +195,19 @@ export function MemoryInterviewModal({
     return (
         <>
             <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-                <View style={[styles.overlay, isCompact && styles.overlayCompact]}>
+                <SafeAreaView
+                    style={[styles.overlay, isCompact && styles.overlayCompact, isPhone && styles.overlayPhone]}
+                    edges={['top', 'bottom']}
+                >
                     <View style={styles.container}>
+                        {isPhone ? (
+                            <MobileScreenHeader
+                                subtitle={draftCuratedNote ? '기억 제목' : '기억 인터뷰'}
+                                sectionTitle={draftCuratedNote ? '내가 정하는 제목' : '사진별 질문'}
+                                rightLabel="닫기"
+                                onRightPress={onClose}
+                            />
+                        ) : (
                         <View style={styles.header}>
                             <View style={styles.headerTextArea}>
                                 <Text style={styles.headerTitle}>
@@ -217,9 +231,23 @@ export function MemoryInterviewModal({
                                 <Text style={styles.closeButtonText}>✕</Text>
                             </TouchableOpacity>
                         </View>
+                        )}
 
-                        <View style={[styles.workspace, isCompact && styles.workspaceCompact]}>
-                            <View style={[styles.photoPanel, isCompact && styles.photoPanelCompact]}>
+                        <View
+                            style={[
+                                styles.workspace,
+                                isCompact && styles.workspaceCompact,
+                                isPhone && styles.workspacePhone,
+                            ]}
+                        >
+                            {!draftCuratedNote ? (
+                            <View
+                                style={[
+                                    styles.photoPanel,
+                                    isCompact && styles.photoPanelCompact,
+                                    isPhone && styles.photoPanelPhone,
+                                ]}
+                            >
                                 <Text style={styles.photoPanelTitle}>연결된 사진</Text>
                                 <ScrollView
                                     style={styles.photoPanelScroll}
@@ -229,7 +257,11 @@ export function MemoryInterviewModal({
                                     {imageUrls.map((imageUrl, index) => (
                                         <TouchableOpacity
                                             key={`${imageUrl}-${index}`}
-                                            style={[styles.photoPanelItem, index === 0 && styles.photoPanelItemPrimary]}
+                                            style={[
+                                                styles.photoPanelItem,
+                                                index === 0 && styles.photoPanelItemPrimary,
+                                                isPhone && styles.photoPanelItemPhone,
+                                            ]}
                                             onPress={() =>
                                                 setPreviewImage({
                                                     url: imageUrl,
@@ -254,11 +286,12 @@ export function MemoryInterviewModal({
                                     </Text>
                                 </View>
                             </View>
+                            ) : null}
 
-                            <View style={styles.questionPane}>
+                            <View style={[styles.questionPane, isPhone && styles.questionPanePhone]}>
                                 {draftCuratedNote ? (
                                     <View style={styles.titleStep}>
-                                        <View style={styles.titleStepCard}>
+                                        <View style={[styles.titleStepCard, isPhone && styles.titleStepCardPhone]}>
                                             <Text style={styles.titleStepEyebrow}>내가 정하는 추억 제목</Text>
                                             <Text style={styles.titleStepHeading}>어떤 이름으로 기억하고 싶나요?</Text>
                                             <Text style={styles.titleStepDescription}>
@@ -277,9 +310,11 @@ export function MemoryInterviewModal({
                                             <Text style={styles.titleLength}>{customTitle.length} / 40</Text>
 
                                             <Text style={styles.suggestionLabel}>AI 추천 제목</Text>
-                                            <Text style={styles.suggestionGuide}>
-                                                그대로 선택하거나, 마음에 드는 표현만 참고해서 바꿔도 됩니다.
-                                            </Text>
+                                            {!isPhone ? (
+                                                <Text style={styles.suggestionGuide}>
+                                                    그대로 선택하거나, 마음에 드는 표현만 참고해서 바꿔도 됩니다.
+                                                </Text>
+                                            ) : null}
                                             <View style={styles.suggestionList}>
                                                 {titleSuggestions.map((title) => {
                                                     const selected = customTitle === title;
@@ -305,15 +340,15 @@ export function MemoryInterviewModal({
                                                 })}
                                             </View>
 
-                                            <View style={styles.titlePreviewBox}>
+                                            {!isPhone ? <View style={styles.titlePreviewBox}>
                                                 <Text style={styles.titlePreviewLabel}>작성된 기억 미리보기</Text>
                                                 <Text style={styles.titlePreviewText} numberOfLines={5}>
                                                     {draftCuratedNote.remembered || draftCuratedNote.sceneDescription}
                                                 </Text>
-                                            </View>
+                                            </View> : null}
                                         </View>
 
-                                        <View style={styles.buttonRow}>
+                                        <View style={[styles.buttonRow, isPhone && styles.buttonRowPhone]}>
                                             <TouchableOpacity
                                                 style={styles.cancelButton}
                                                 onPress={() => setDraftCuratedNote(null)}
@@ -340,7 +375,7 @@ export function MemoryInterviewModal({
                                     showsVerticalScrollIndicator={false}
                                 >
                                     {hasMeaningfulMemoryContext(factsAndClues.memoryContext) && (
-                                        <View style={styles.contextBlock}>
+                                        <View style={[styles.contextBlock, isPhone && styles.contextBlockPhone]}>
                                             <Text style={styles.contextTitle}>먼저 제공한 기억의 단서</Text>
                                             <Text style={styles.contextGuide}>
                                                 아래 내용은 AI가 사진을 해석하고 질문할 때 우선 참고한 정보입니다.
@@ -404,7 +439,7 @@ export function MemoryInterviewModal({
                                         return (
                                             <View
                                                 key={question.id || String(questionIndex)}
-                                                style={styles.questionBlock}
+                                                style={[styles.questionBlock, isPhone && styles.questionBlockPhone]}
                                             >
                                                 <View style={styles.badgeRow}>
                                                     <View style={styles.categoryBadge}>
@@ -519,7 +554,7 @@ export function MemoryInterviewModal({
                                         );
                                     })}
 
-                                    <View style={styles.questionBlock}>
+                                    <View style={[styles.questionBlock, isPhone && styles.questionBlockPhone]}>
                                         <View style={styles.freeRecallBadge}>
                                             <Text style={styles.freeRecallBadgeText}>자유 회상</Text>
                                         </View>
@@ -547,7 +582,7 @@ export function MemoryInterviewModal({
                                         </View>
                                     )}
 
-                                    <View style={styles.buttonRow}>
+                                    <View style={[styles.buttonRow, isPhone && styles.buttonRowPhone]}>
                                         <TouchableOpacity
                                             style={styles.cancelButton}
                                             onPress={onClose}
@@ -576,7 +611,7 @@ export function MemoryInterviewModal({
                             </View>
                         </View>
                     </View>
-                </View>
+                </SafeAreaView>
             </Modal>
 
             <Modal
@@ -624,6 +659,7 @@ const styles = StyleSheet.create({
         paddingVertical: 28,
     },
     overlayCompact: { paddingHorizontal: 16, paddingVertical: 20 },
+    overlayPhone: { paddingHorizontal: 0, paddingVertical: 0 },
     container: {
         width: '100%',
         maxWidth: 1360,
@@ -677,6 +713,7 @@ const styles = StyleSheet.create({
         minHeight: 0,
     },
     workspaceCompact: { flexDirection: 'column' },
+    workspacePhone: { paddingHorizontal: 16, gap: 12 },
     photoPanel: {
         width: 380,
         flexShrink: 0,
@@ -688,6 +725,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
     },
     photoPanelCompact: { width: '100%', maxHeight: 300 },
+    photoPanelPhone: { maxHeight: 242, padding: 16, borderWidth: 0, borderRadius: 20 },
     photoPanelTitle: {
         color: memoryColors.text,
         fontSize: 20,
@@ -712,6 +750,7 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     photoPanelItemPrimary: { width: '100%', height: 250 },
+    photoPanelItemPhone: { width: '100%', height: 108, borderRadius: 16 },
     photoPanelImage: { width: '100%', height: '100%' },
     photoPanelNumberBadge: {
         position: 'absolute',
@@ -744,6 +783,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     questionPane: { flex: 1, minWidth: 0, minHeight: 0 },
+    questionPanePhone: { width: '100%' },
     titleStep: {
         flex: 1,
         justifyContent: 'space-between',
@@ -756,6 +796,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 28,
     },
+    titleStepCardPhone: { padding: 16, borderWidth: 0, borderRadius: 20 },
     titleStepEyebrow: {
         color: memoryColors.brand,
         fontSize: 12,
@@ -878,6 +919,7 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.brandBorder,
         marginBottom: 16,
     },
+    contextBlockPhone: { padding: 16, borderWidth: 0, borderRadius: 20 },
     contextTitle: {
         color: memoryColors.brand,
         fontSize: 14,
@@ -910,6 +952,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: memoryColors.border,
     },
+    questionBlockPhone: { padding: 16, borderWidth: 0, borderRadius: 20, marginBottom: 12 },
     badgeRow: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -1073,6 +1116,7 @@ const styles = StyleSheet.create({
         gap: 10,
         alignItems: 'center',
     },
+    buttonRowPhone: { flexDirection: 'column-reverse', alignItems: 'stretch', width: '100%' },
     cancelButton: {
         minWidth: 120,
         paddingHorizontal: 16,

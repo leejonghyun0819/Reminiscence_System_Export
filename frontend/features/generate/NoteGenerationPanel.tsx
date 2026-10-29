@@ -9,6 +9,7 @@ interface NoteGenerationPanelProps {
     memories: MemoryItem[];
     onGenerated: (note: MemoryItem) => void;
     onCancel: () => void;
+    mobile?: boolean;
 }
 
 const MAX_SELECTED_MEMORIES = 6;
@@ -17,7 +18,12 @@ function limitText(value: string | undefined, maxLength: number): string {
     return (value || '').trim().slice(0, maxLength);
 }
 
-export const NoteGenerationPanel: React.FC<NoteGenerationPanelProps> = ({ memories, onGenerated, onCancel }) => {
+export const NoteGenerationPanel: React.FC<NoteGenerationPanelProps> = ({
+    memories,
+    onGenerated,
+    onCancel,
+    mobile = false,
+}) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [style, setStyle] = useState<GeneratedNoteStyle>('warm');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -115,7 +121,7 @@ export const NoteGenerationPanel: React.FC<NoteGenerationPanelProps> = ({ memori
     };
 
     return (
-        <View style={styles.panel}>
+        <View style={[styles.panel, mobile && styles.panelMobile]}>
             <View style={styles.panelHeader}>
                 <View style={styles.headerCopy}>
                     <View style={styles.titleRow}>
@@ -142,9 +148,9 @@ export const NoteGenerationPanel: React.FC<NoteGenerationPanelProps> = ({ memori
                 <>
                     <Text style={styles.sectionLabel}>1. 노트에 담을 추억 선택 · 최대 {MAX_SELECTED_MEMORIES}개</Text>
                     <ScrollView
-                        horizontal
+                        horizontal={!mobile}
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.memoryList}
+                        contentContainerStyle={[styles.memoryList, mobile && styles.memoryListMobile]}
                     >
                         {memories.map((memory) => {
                             const isSelected = selectedIds.has(memory.id);
@@ -153,7 +159,11 @@ export const NoteGenerationPanel: React.FC<NoteGenerationPanelProps> = ({ memori
                             return (
                                 <TouchableOpacity
                                     key={memory.id}
-                                    style={[styles.memoryCard, isSelected && styles.memoryCardSelected]}
+                                    style={[
+                                        styles.memoryCard,
+                                        mobile && styles.memoryCardMobile,
+                                        isSelected && styles.memoryCardSelected,
+                                    ]}
                                     onPress={() => toggleMemory(memory.id)}
                                     activeOpacity={0.8}
                                 >
@@ -187,7 +197,7 @@ export const NoteGenerationPanel: React.FC<NoteGenerationPanelProps> = ({ memori
                     </ScrollView>
 
                     <Text style={styles.sectionLabel}>2. 글의 분위기</Text>
-                    <View style={styles.styleOptions}>
+                    <View style={[styles.styleOptions, mobile && styles.styleOptionsMobile]}>
                         <TouchableOpacity
                             style={[styles.styleCard, style === 'warm' && styles.styleCardActive]}
                             onPress={() => setStyle('warm')}
@@ -210,11 +220,12 @@ export const NoteGenerationPanel: React.FC<NoteGenerationPanelProps> = ({ memori
 
                     {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-                    <View style={styles.footer}>
+                    <View style={[styles.footer, mobile && styles.footerMobile]}>
                         <Text style={styles.selectionText}>{selectedMemories.length}개 선택됨</Text>
                         <TouchableOpacity
                             style={[
                                 styles.generateButton,
+                                mobile && styles.generateButtonMobile,
                                 (selectedMemories.length === 0 || isGenerating) && styles.generateButtonDisabled,
                             ]}
                             onPress={handleGenerate}
@@ -245,6 +256,7 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.border,
         marginBottom: 16,
     },
+    panelMobile: { padding: 16, borderWidth: 0, borderRadius: 20, marginBottom: 12 },
     panelHeader: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -299,6 +311,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     memoryList: { gap: 10, paddingBottom: 18 },
+    memoryListMobile: { width: '100%' },
     memoryCard: {
         width: 245,
         minHeight: 82,
@@ -311,6 +324,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 10,
     },
+    memoryCardMobile: { width: '100%', minHeight: 78 },
     memoryCardSelected: {
         borderColor: memoryColors.brand,
         backgroundColor: memoryColors.brandLight,
@@ -352,6 +366,7 @@ const styles = StyleSheet.create({
         gap: 10,
         marginBottom: 16,
     },
+    styleOptionsMobile: { gap: 7 },
     styleCard: {
         flexGrow: 1,
         flexBasis: 240,
@@ -385,6 +400,7 @@ const styles = StyleSheet.create({
         gap: 12,
         flexWrap: 'wrap',
     },
+    footerMobile: { flexDirection: 'column', alignItems: 'stretch' },
     selectionText: { fontSize: 12, color: '#475569', fontWeight: '700' },
     generateButton: {
         minWidth: 240,
@@ -394,6 +410,7 @@ const styles = StyleSheet.create({
         backgroundColor: memoryColors.brand,
         alignItems: 'center',
     },
+    generateButtonMobile: { width: '100%', minWidth: 0, minHeight: 50, borderRadius: 12 },
     generateButtonDisabled: { backgroundColor: '#94A3B8' },
     generateButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
     loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

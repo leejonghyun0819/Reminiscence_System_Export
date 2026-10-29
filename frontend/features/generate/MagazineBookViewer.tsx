@@ -16,6 +16,7 @@ interface MagazineBookViewerProps {
     editStory: string;
     setEditStory: (value: string) => void;
     onSaveEdit: () => void;
+    mobile?: boolean;
 }
 
 export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
@@ -29,6 +30,7 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
     editStory,
     setEditStory,
     onSaveEdit,
+    mobile = false,
 }) => {
     const generatedNote = note.generatedNote;
     const photoCount = note.imageUrls?.length || 0;
@@ -43,9 +45,9 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
     };
 
     return (
-        <View style={styles.workspace}>
-            <View style={styles.previewCard}>
-                <View style={styles.previewHeader}>
+        <View style={[styles.workspace, mobile && styles.workspaceMobile]}>
+            <View style={[styles.previewCard, mobile && styles.previewCardMobile]}>
+                <View style={[styles.previewHeader, mobile && styles.previewHeaderMobile]}>
                     <View style={styles.titleCopy}>
                         <Text style={styles.bookMainTitle}>{previewTitle}</Text>
                         <Text style={styles.bookSubtitle}>
@@ -55,9 +57,9 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
                     {generatedNote ? <Text style={styles.styleBadge}>따뜻한 에세이</Text> : null}
                 </View>
 
-                <View style={styles.previewBody}>
-                    <View style={styles.photoColumn}>
-                        <View style={styles.mainPhotoBox}>
+                <View style={[styles.previewBody, mobile && styles.previewBodyMobile]}>
+                    <View style={[styles.photoColumn, mobile && styles.contentColumnMobile]}>
+                        <View style={[styles.mainPhotoBox, mobile && styles.mainPhotoBoxMobile]}>
                             {photoCount > 0 ? (
                                 <Image
                                     source={{ uri: note.imageUrls[activePhotoIdx] }}
@@ -102,7 +104,7 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
                         ) : null}
                     </View>
 
-                    <View style={styles.storyColumn}>
+                    <View style={[styles.storyColumn, mobile && styles.contentColumnMobile]}>
                         <Text style={styles.storyHeading}>함께여서 기억나는 날</Text>
                         <Text style={styles.storyContent}>{previewStory}</Text>
                         <View style={styles.metaList}>
@@ -118,7 +120,7 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
                 </View>
             </View>
 
-            <View style={styles.editorCard}>
+            <View style={[styles.editorCard, mobile && styles.editorCardMobile]}>
                 <Text style={styles.editorTitle}>노트 편집</Text>
 
                 <Text style={styles.inputLabel}>노트 제목</Text>
@@ -173,6 +175,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         gap: 24,
     },
+    workspaceMobile: { flexDirection: 'column', flexWrap: 'nowrap', gap: 12 },
     previewCard: {
         flexGrow: 1,
         flexBasis: 720,
@@ -183,6 +186,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 24,
     },
+    previewCardMobile: { flexBasis: 'auto', minWidth: 0, padding: 16, borderWidth: 0, borderRadius: 20 },
     previewHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -190,6 +194,7 @@ const styles = StyleSheet.create({
         gap: 16,
         marginBottom: 24,
     },
+    previewHeaderMobile: { flexDirection: 'column', marginBottom: 16 },
     titleCopy: { flex: 1 },
     bookMainTitle: {
         color: memoryColors.text,
@@ -216,8 +221,10 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     previewBody: { flexDirection: 'row', flexWrap: 'wrap', gap: 24 },
+    previewBodyMobile: { flexDirection: 'column', flexWrap: 'nowrap', gap: 18 },
     photoColumn: { flexGrow: 1, flexBasis: 330, minWidth: 260 },
     storyColumn: { flexGrow: 1, flexBasis: 320, minWidth: 260, paddingTop: 4 },
+    contentColumnMobile: { flexBasis: 'auto', minWidth: 0, width: '100%' },
     mainPhotoBox: {
         width: '100%',
         height: 360,
@@ -228,6 +235,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    mainPhotoBoxMobile: { height: 220, borderRadius: 16 },
     mainPhotoImage: { width: '100%', height: '100%' },
     noPhotoBox: { alignItems: 'center', gap: 8 },
     noPhotoIcon: { fontSize: 36 },
@@ -313,6 +321,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 24,
     },
+    editorCardMobile: { width: '100%', minWidth: 0, padding: 16, borderWidth: 0, borderRadius: 20 },
     editorTitle: {
         color: memoryColors.text,
         fontSize: 20,
