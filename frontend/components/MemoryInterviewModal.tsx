@@ -229,41 +229,46 @@ export function MemoryInterviewModal({
                         </View>
 
                         <View style={[styles.workspace, isCompact && styles.workspaceCompact]}>
-                            <View style={[styles.photoPanel, isCompact && styles.photoPanelCompact]}>
-                                <Text style={styles.photoPanelTitle}>연결된 사진</Text>
-                                <ScrollView
-                                    style={styles.photoPanelScroll}
-                                    contentContainerStyle={styles.photoPanelGrid}
-                                    showsVerticalScrollIndicator={false}
-                                >
-                                    {imageUrls.map((imageUrl, index) => (
-                                        <TouchableOpacity
-                                            key={`${imageUrl}-${index}`}
-                                            style={[styles.photoPanelItem, index === 0 && styles.photoPanelItemPrimary]}
-                                            onPress={() =>
-                                                setPreviewImage({
-                                                    url: imageUrl,
-                                                    photoNumber: index + 1,
-                                                })
-                                            }
-                                            activeOpacity={0.82}
-                                        >
-                                            <Image source={{ uri: imageUrl }} style={styles.photoPanelImage} />
-                                            <View style={styles.photoPanelNumberBadge}>
-                                                <Text style={styles.photoPanelNumberText}>사진 {index + 1}</Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                                <View style={styles.clueSummary}>
-                                    <Text style={styles.clueSummaryTitle}>사진 속 단서</Text>
-                                    <Text style={styles.clueSummaryText} numberOfLines={3}>
-                                        {(factsAndClues.visualClues || []).join(' · ') ||
-                                            factsAndClues.sceneFacts ||
-                                            '사진별 단서를 질문에서 확인할 수 있어요.'}
-                                    </Text>
+                            {!isCompact && (
+                                <View style={styles.photoPanel}>
+                                    <Text style={styles.photoPanelTitle}>연결된 사진</Text>
+                                    <ScrollView
+                                        style={styles.photoPanelScroll}
+                                        contentContainerStyle={styles.photoPanelGrid}
+                                        showsVerticalScrollIndicator={false}
+                                    >
+                                        {imageUrls.map((imageUrl, index) => (
+                                            <TouchableOpacity
+                                                key={`${imageUrl}-${index}`}
+                                                style={[
+                                                    styles.photoPanelItem,
+                                                    index === 0 && styles.photoPanelItemPrimary,
+                                                ]}
+                                                onPress={() =>
+                                                    setPreviewImage({
+                                                        url: imageUrl,
+                                                        photoNumber: index + 1,
+                                                    })
+                                                }
+                                                activeOpacity={0.82}
+                                            >
+                                                <Image source={{ uri: imageUrl }} style={styles.photoPanelImage} />
+                                                <View style={styles.photoPanelNumberBadge}>
+                                                    <Text style={styles.photoPanelNumberText}>사진 {index + 1}</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                    <View style={styles.clueSummary}>
+                                        <Text style={styles.clueSummaryTitle}>사진 속 단서</Text>
+                                        <Text style={styles.clueSummaryText} numberOfLines={3}>
+                                            {(factsAndClues.visualClues || []).join(' · ') ||
+                                                factsAndClues.sceneFacts ||
+                                                '사진별 단서를 질문에서 확인할 수 있어요.'}
+                                        </Text>
+                                    </View>
                                 </View>
-                            </View>
+                            )}
 
                             <View style={styles.questionPane}>
                                 {draftCuratedNote ? (
