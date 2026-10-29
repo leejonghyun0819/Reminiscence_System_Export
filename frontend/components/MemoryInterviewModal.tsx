@@ -28,6 +28,7 @@ import {
 import { memoryColors, memoryFontFamily } from '../constants/memoryTheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MobileScreenHeader } from './mobile/MobileScreenHeader';
+import { MemoryContextForm } from './MemoryContextForm';
 
 interface FactsAndClues {
     estimatedEra?: string;
@@ -49,7 +50,13 @@ interface MemoryInterviewModalProps {
     imageUrls: string[];
     initialAnswers?: Record<string, string>;
     initialExtraStory?: string;
-    onComplete: (curatedNote: CuratedNoteData, qaPairs: InterviewAnswerItem[], extraStory: string) => void;
+    deferContextUntilAfterInterview?: boolean;
+    onComplete: (
+        curatedNote: CuratedNoteData,
+        qaPairs: InterviewAnswerItem[],
+        extraStory: string,
+        memoryContext: MemoryContextData,
+    ) => void;
 }
 
 function getValidPhotoIndexes(question: InterviewQuestionItem, imageUrls: string[]): number[] {
@@ -72,6 +79,7 @@ export function MemoryInterviewModal({
     imageUrls = [],
     initialAnswers = {},
     initialExtraStory = '',
+    deferContextUntilAfterInterview = false,
     onComplete,
 }: MemoryInterviewModalProps) {
     const { width } = useWindowDimensions();
@@ -85,6 +93,8 @@ export function MemoryInterviewModal({
     const [draftCuratedNote, setDraftCuratedNote] = useState<CuratedNoteData | null>(null);
     const [pendingQaPairs, setPendingQaPairs] = useState<InterviewAnswerItem[]>([]);
     const [customTitle, setCustomTitle] = useState<string>('');
+    const [contextStepVisible, setContextStepVisible] = useState<boolean>(false);
+    const [contextDraft, setContextDraft] = useState<MemoryContextData>({});
 
     useEffect(() => {
         if (visible) {
@@ -96,8 +106,10 @@ export function MemoryInterviewModal({
             setDraftCuratedNote(null);
             setPendingQaPairs([]);
             setCustomTitle('');
+            setContextStepVisible(false);
+            setContextDraft({ ...(factsAndClues.memoryContext || {}) });
         }
-    }, [visible, initialAnswers, initialExtraStory]);
+    }, [visible, initialAnswers, initialExtraStory, factsAndClues.memoryContext]);
 
     const handleOptionSelect = (questionId: string, option: string) => {
         setAnswers((previous) => ({
@@ -113,43 +125,47 @@ export function MemoryInterviewModal({
         }));
     };
 
-    const handleSubmit = async () => {
+    const collectQaPairs = (): InterviewAnswerItem[] => {
+        const qaPairs: InterviewAnswerItem[] = questions.map((question) => {
+            const targetPhotoIndexes = getValidPhotoIndexes(question, imageUrls);
+
+            return {
+                id: question.id,
+                category: question.category,
+                targetClue: question.targetClue,
+                targetPhotoIndexes,
+                targetImageUrls: targetPhotoIndexes.map((photoIndex) => imageUrls[photoIndex - 1]),
+                question: question.question,
+                answer: answers[question.id]?.trim() || '기억 안 남',
+            };
+        });
+
+        if (extraStory.trim()) {
+            qaPairs.push({
+                id: 'extra_memory',
+                category: '자유 회상',
+                targetClue: '',
+                targetPhotoIndexes: [],
+                targetImageUrls: [],
+                question: '추가 사연',
+                answer: extraStory.trim(),
+            });
+        }
+
+        return qaPairs;
+    };
+
+    const buildNoteFromInterview = async (qaPairs: InterviewAnswerItem[]) => {
         setIsSubmitting(true);
-        setStatusText('✍️ 사진별 답변을 바탕으로 추억 노트를 작성 중입니다...');
+        setStatusText('✍️ 인터뷰와 기억 단서를 바탕으로 추억 노트를 작성 중입니다...');
 
         try {
-            const qaPairs: InterviewAnswerItem[] = questions.map((question) => {
-                const targetPhotoIndexes = getValidPhotoIndexes(question, imageUrls);
-
-                return {
-                    id: question.id,
-                    category: question.category,
-                    targetClue: question.targetClue,
-                    targetPhotoIndexes,
-                    targetImageUrls: targetPhotoIndexes.map((photoIndex) => imageUrls[photoIndex - 1]),
-                    question: question.question,
-                    answer: answers[question.id]?.trim() || '기억 안 남',
-                };
-            });
-
-            if (extraStory.trim()) {
-                qaPairs.push({
-                    id: 'extra_memory',
-                    category: '자유 회상',
-                    targetClue: '',
-                    targetPhotoIndexes: [],
-                    targetImageUrls: [],
-                    question: '추가 사연',
-                    answer: extraStory.trim(),
-                });
-            }
-
             const curatedNote = await buildCuratedMemoryNote(
                 {
                     estimatedEra: factsAndClues.estimatedEra || '시기 미상',
                     sceneFacts: factsAndClues.sceneFacts || '',
                     visualClues: factsAndClues.visualClues || [],
-                    memoryContext: factsAndClues.memoryContext || {},
+                    memoryContext: contextDraft,
                 },
                 qaPairs,
             );
@@ -157,12 +173,25 @@ export function MemoryInterviewModal({
             setDraftCuratedNote(curatedNote);
             setPendingQaPairs(qaPairs);
             setCustomTitle('');
+            setContextStepVisible(false);
         } catch (error: any) {
             Alert.alert('재분석 오류', error?.message || '답변을 반영하는 중 문제가 발생했습니다.');
         } finally {
             setIsSubmitting(false);
             setStatusText('');
         }
+    };
+
+    const handleSubmit = () => {
+        const qaPairs = collectQaPairs();
+        setPendingQaPairs(qaPairs);
+
+        if (deferContextUntilAfterInterview) {
+            setContextStepVisible(true);
+            return;
+        }
+
+        void buildNoteFromInterview(qaPairs);
     };
 
     const titleSuggestions = Array.from(
@@ -187,6 +216,7 @@ export function MemoryInterviewModal({
             },
             pendingQaPairs,
             extraStory,
+            contextDraft,
         );
     };
 
@@ -202,8 +232,20 @@ export function MemoryInterviewModal({
                     <View style={styles.container}>
                         {isPhone ? (
                             <MobileScreenHeader
-                                subtitle={draftCuratedNote ? '기억 제목' : '기억 인터뷰'}
-                                sectionTitle={draftCuratedNote ? '내가 정하는 제목' : '사진별 질문'}
+                                subtitle={
+                                    draftCuratedNote
+                                        ? '기억 제목'
+                                        : contextStepVisible
+                                          ? '마지막 단서'
+                                          : '기억 인터뷰'
+                                }
+                                sectionTitle={
+                                    draftCuratedNote
+                                        ? '내가 정하는 제목'
+                                        : contextStepVisible
+                                          ? '기억 단서 입력'
+                                          : '사진별 질문'
+                                }
                                 rightLabel="닫기"
                                 onRightPress={onClose}
                             />
@@ -213,12 +255,16 @@ export function MemoryInterviewModal({
                                 <Text style={styles.headerTitle}>
                                     {draftCuratedNote
                                         ? '마지막으로, 이 기억의 제목을 지어주세요'
-                                        : '사진을 보며, 떠오르는 기억을 들려주세요'}
+                                        : contextStepVisible
+                                          ? '인터뷰에 기억의 단서를 더해주세요'
+                                          : '사진을 보며, 떠오르는 기억을 들려주세요'}
                                 </Text>
                                 <Text style={styles.headerSubtitle}>
                                     {draftCuratedNote
                                         ? 'AI가 글을 정리하고 제목 후보를 준비했어요. 최종 제목은 직접 결정합니다.'
-                                        : '입력한 단서와 사진별 질문을 함께 확인합니다. 기억나지 않는 답변은 비워도 됩니다.'}
+                                        : contextStepVisible
+                                          ? '아는 내용만 적어도 충분합니다. 인터뷰 답변과 함께 최종 노트에 반영됩니다.'
+                                          : '사진별 질문을 확인합니다. 기억나지 않는 답변은 비워도 됩니다.'}
                                 </Text>
                             </View>
                             <TouchableOpacity
@@ -240,7 +286,7 @@ export function MemoryInterviewModal({
                                 isPhone && styles.workspacePhone,
                             ]}
                         >
-                            {!draftCuratedNote ? (
+                            {!draftCuratedNote && !contextStepVisible ? (
                             <View
                                 style={[
                                     styles.photoPanel,
@@ -351,7 +397,10 @@ export function MemoryInterviewModal({
                                         <View style={[styles.buttonRow, isPhone && styles.buttonRowPhone]}>
                                             <TouchableOpacity
                                                 style={styles.cancelButton}
-                                                onPress={() => setDraftCuratedNote(null)}
+                                                onPress={() => {
+                                                    setDraftCuratedNote(null);
+                                                    setContextStepVisible(false);
+                                                }}
                                             >
                                                 <Text style={styles.cancelButtonText}>답변 수정</Text>
                                             </TouchableOpacity>
@@ -367,6 +416,73 @@ export function MemoryInterviewModal({
                                             </TouchableOpacity>
                                         </View>
                                     </View>
+                                ) : contextStepVisible ? (
+                                    <View style={styles.clueStep}>
+                                        <ScrollView
+                                            style={styles.body}
+                                            contentContainerStyle={styles.clueStepContent}
+                                            showsVerticalScrollIndicator={false}
+                                            keyboardShouldPersistTaps="handled"
+                                        >
+                                            <View
+                                                style={[
+                                                    styles.clueStepCard,
+                                                    isPhone && styles.clueStepCardPhone,
+                                                ]}
+                                            >
+                                                <Text style={styles.clueStepEyebrow}>인터뷰 완료</Text>
+                                                <Text style={styles.clueStepHeading}>
+                                                    마지막으로 기억의 단서를 더해주세요
+                                                </Text>
+                                                <Text style={styles.clueStepDescription}>
+                                                    사진만으로 알기 어려운 시기, 장소, 함께한 사람을 적으면 더 정확한 추억 노트가 됩니다.
+                                                </Text>
+                                                <MemoryContextForm
+                                                    value={contextDraft}
+                                                    onChange={setContextDraft}
+                                                    disabled={isSubmitting}
+                                                    compact
+                                                />
+                                            </View>
+                                        </ScrollView>
+
+                                        <View style={styles.footer}>
+                                            {isSubmitting ? (
+                                                <View style={styles.statusRow}>
+                                                    <ActivityIndicator size="small" color="#0284C7" />
+                                                    <Text style={styles.statusText}>{statusText}</Text>
+                                                </View>
+                                            ) : null}
+                                            <View style={[styles.buttonRow, isPhone && styles.buttonRowPhone]}>
+                                                <TouchableOpacity
+                                                    style={styles.cancelButton}
+                                                    onPress={() => setContextStepVisible(false)}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    <Text style={styles.cancelButtonText}>인터뷰로 돌아가기</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.submitButton,
+                                                        isSubmitting && styles.submitButtonDisabled,
+                                                    ]}
+                                                    onPress={() => void buildNoteFromInterview(pendingQaPairs)}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    {isSubmitting ? (
+                                                        <View style={styles.loadingInner}>
+                                                            <ActivityIndicator size="small" color="#FFFFFF" />
+                                                            <Text style={styles.submitButtonText}>노트 작성 중...</Text>
+                                                        </View>
+                                                    ) : (
+                                                        <Text style={styles.submitButtonText}>
+                                                            단서를 반영해 노트 완성하기
+                                                        </Text>
+                                                    )}
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    </View>
                                 ) : (
                                     <>
                                 <ScrollView
@@ -374,7 +490,8 @@ export function MemoryInterviewModal({
                                     contentContainerStyle={styles.bodyContent}
                                     showsVerticalScrollIndicator={false}
                                 >
-                                    {hasMeaningfulMemoryContext(factsAndClues.memoryContext) && (
+                                    {!deferContextUntilAfterInterview &&
+                                        hasMeaningfulMemoryContext(factsAndClues.memoryContext) && (
                                         <View style={[styles.contextBlock, isPhone && styles.contextBlockPhone]}>
                                             <Text style={styles.contextTitle}>먼저 제공한 기억의 단서</Text>
                                             <Text style={styles.contextGuide}>
@@ -601,7 +718,11 @@ export function MemoryInterviewModal({
                                                     <Text style={styles.submitButtonText}>노트 작성 중...</Text>
                                                 </View>
                                             ) : (
-                                                <Text style={styles.submitButtonText}>답변으로 추억 완성하기</Text>
+                                                <Text style={styles.submitButtonText}>
+                                                    {deferContextUntilAfterInterview
+                                                        ? '다음 · 기억 단서 입력'
+                                                        : '답변으로 추억 완성하기'}
+                                                </Text>
                                             )}
                                         </TouchableOpacity>
                                     </View>
@@ -890,6 +1011,45 @@ const styles = StyleSheet.create({
         color: memoryColors.textSecondary,
         fontSize: 13,
         lineHeight: 21,
+    },
+    clueStep: {
+        flex: 1,
+        minHeight: 0,
+        justifyContent: 'space-between',
+    },
+    clueStepContent: {
+        paddingBottom: 12,
+    },
+    clueStepCard: {
+        padding: 28,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: memoryColors.border,
+        backgroundColor: memoryColors.surface,
+    },
+    clueStepCardPhone: {
+        padding: 16,
+        borderWidth: 0,
+        borderRadius: 20,
+    },
+    clueStepEyebrow: {
+        color: memoryColors.brand,
+        fontSize: 12,
+        fontWeight: '700',
+        marginBottom: 8,
+    },
+    clueStepHeading: {
+        color: memoryColors.text,
+        fontSize: 22,
+        lineHeight: 31,
+        fontWeight: '700',
+    },
+    clueStepDescription: {
+        color: memoryColors.textMuted,
+        fontSize: 13,
+        lineHeight: 21,
+        marginTop: 6,
+        marginBottom: 20,
     },
     body: {
         flex: 1,
