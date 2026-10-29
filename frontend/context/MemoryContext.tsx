@@ -354,7 +354,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             return savedItem;
         } catch (e) {
             console.error('앨범 서버 생성 오류 상세:', e);
-            return null;
+            throw e instanceof Error ? e : new Error('앨범을 서버에 저장하지 못했습니다.');
         }
     };
 

@@ -24,9 +24,10 @@ async def save_media_file(
     orig_name = upload_file.filename or f"media_{index}"
     _, ext = os.path.splitext(orig_name)
     ext_lower = ext.lower()
+    content_type = (upload_file.content_type or "").lower()
 
     video_exts = {".mp4", ".mov", ".webm", ".m4v", ".avi", ".mkv"}
-    if upload_file.content_type.startswith("video/") or ext_lower in video_exts:
+    if content_type.startswith("video/") or ext_lower in video_exts:
         saved_filename = f"video_{index}.mp4"
         temp_input_path = os.path.join(save_folder, f"temp_{index}{ext_lower}")
         final_output_path = os.path.join(save_folder, saved_filename)

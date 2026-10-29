@@ -3,52 +3,30 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
-    const insets = useSafeAreaInsets();
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: Platform.OS === 'web' ? Colors[colorScheme].tint : '#075985',
+                tabBarActiveTintColor: Colors[colorScheme].tint,
                 tabBarInactiveTintColor: '#94A3B8',
-                tabBarActiveBackgroundColor: '#2F95DC',
                 headerShown: false,
                 sceneStyle: { backgroundColor: '#F8FAFC' },
                 tabBarStyle:
                     Platform.OS === 'web'
                         ? { display: 'none' }
                         : {
-                              position: 'absolute',
-                              left: 16,
-                              right: 16,
-                              bottom: Math.max(insets.bottom, 12),
-                              height: 72,
-                              paddingTop: 0,
-                              paddingBottom: 0,
-                              borderTopWidth: 0,
-                              borderRadius: 24,
+                              height: 84,
+                              paddingTop: 8,
+                              paddingBottom: 12,
+                              borderTopColor: '#E2E8F0',
                               backgroundColor: '#FFFFFF',
-                              shadowColor: '#213852',
-                              shadowOffset: { width: 0, height: -4 },
-                              shadowOpacity: 0.1,
-                              shadowRadius: 8,
-                              elevation: 8,
-                          },
-                tabBarItemStyle:
-                    Platform.OS === 'web'
-                        ? undefined
-                        : {
-                              height: 56,
-                              marginVertical: 8,
-                              marginHorizontal: 3,
-                              borderRadius: 18,
                           },
                 tabBarLabelStyle: {
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: '700',
                 },
             }}

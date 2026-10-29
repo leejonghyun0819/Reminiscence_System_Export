@@ -1,5 +1,10 @@
 import IndexScreen from '../../features/screens/IndexScreen';
+import { MobileSafeAreaView } from '../../components/mobile/MobileSafeAreaView';
 
 export default function NativeIndexRoute() {
-    return <IndexScreen mobile />;
+    return (
+        <MobileSafeAreaView>
+            <IndexScreen mobile />
+        </MobileSafeAreaView>
+    );
 }

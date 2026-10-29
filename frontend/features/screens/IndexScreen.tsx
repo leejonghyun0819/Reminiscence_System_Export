@@ -31,7 +31,6 @@ import { GalleryViewerModal } from '../../features/index/GalleryViewerModal';
 import { EditMemoryModal } from '../../features/index/EditMemoryModal';
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
-import { MobileScreenHeader } from '../../components/mobile/MobileScreenHeader';
 import { memoryColors, memoryFontFamily, memoryLayout } from '../../constants/memoryTheme';
 
 export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
@@ -223,17 +222,11 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
             return;
         }
 
-        const analysisContext: MemoryContextData = mobile && !activeEditingMemory ? {} : memoryContext;
-
         setIsProcessing(true);
         setStatusMessage(
             activeEditingMemory
-                ? mobile
-                    ? '기존 앨범 사진으로 새 인터뷰를 준비 중입니다...'
-                    : '기존 앨범 사진과 수정한 기억 단서를 함께 분석 중입니다...'
-                : mobile
-                  ? '사진을 분석하고 기억 질문을 준비 중입니다...'
-                  : '사진과 입력한 기억의 단서를 함께 분석 중입니다...',
+                ? '기존 앨범 사진과 수정한 기억 단서를 함께 분석 중입니다...'
+                : '사진과 입력한 기억의 단서를 함께 분석 중입니다...',
         );
         try {
             let interviewResult: InterviewResponseData;
@@ -243,7 +236,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 interviewResult = await generateInterviewFromExistingAlbum(
                     activeEditingMemory.id,
                     activeEditingMemory.imageUrls,
-                    analysisContext,
+                    memoryContext,
                 );
                 detectedMode = interviewResult.detectedMode || activeEditingMemory.mode || 'childhood';
             } else {
@@ -261,7 +254,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                     imagePayload,
                     modeDetection.photoAnalyses,
                     detectedMode,
-                    analysisContext,
+                    memoryContext,
                 );
             }
 
@@ -270,7 +263,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
             setInterviewData({
                 ...interviewResult,
                 detectedMode,
-                memoryContext: interviewResult.memoryContext || analysisContext,
+                memoryContext: interviewResult.memoryContext || memoryContext,
             });
             setInterviewModalVisible(true);
         } catch (error: any) {
@@ -321,7 +314,6 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
         curatedNote: CuratedNoteData,
         qaPairs: InterviewAnswerItem[],
         _extraStory: string,
-        completedMemoryContext: MemoryContextData,
     ) => {
         if (!interviewData) return;
         setIsProcessing(true);
@@ -335,7 +327,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 sceneFacts: interviewData.sceneFacts,
                 visualClues: interviewData.visualClues,
                 questions: qaPairs,
-                memoryContext: completedMemoryContext,
+                memoryContext: interviewData.memoryContext || {},
             };
 
             if (activeEditingMemory) {
@@ -371,7 +363,15 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                         storyCaption: `${curatedNote.remembered}\n\n${curatedNote.reflection}`,
                     },
                 };
-                await addMultiImageMemoryToServer(selectedImages, selectedAudio, payload, selectedFolder);
+                const savedMemory = await addMultiImageMemoryToServer(
+                    selectedImages,
+                    selectedAudio,
+                    payload,
+                    selectedFolder,
+                );
+                if (!savedMemory) {
+                    throw new Error('완성한 추억을 저장하지 못했습니다. 다시 시도해주세요.');
+                }
                 setSelectedImages([]);
                 setSelectedAudio(null);
                 setMemoryContext({ ...DEFAULT_MEMORY_CONTEXT });
@@ -455,47 +455,25 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
 
             <MemoryAppHeader />
 
-            {mobile ? (
-                <MobileScreenHeader
-                    subtitle={activeEditingMemory ? '재인터뷰' : selectedImages.length > 0 ? '사진 선택됨' : '새 기억'}
-                    sectionTitle={activeEditingMemory ? '사진 다시 확인' : '추억 수집'}
-                />
-            ) : null}
-
-            <ScrollView
-                ref={pageScrollRef}
-                contentContainerStyle={[styles.scrollContent, mobile && styles.scrollContentMobile]}
-            >
+            <ScrollView ref={pageScrollRef} contentContainerStyle={styles.scrollContent}>
                 <View style={[styles.pageShell, isNarrow && styles.pageShellNarrow]}>
-                    {!mobile ? (
-                        <MemoryPageHeader
-                            title="사진 속 순간에, 나의 기억을 더하세요"
-                            subtitle="사진과 기억의 단서를 바탕으로 AI가 질문하고, 확인된 답변으로 추억 노트를 만듭니다."
-                        />
-                    ) : null}
+                    <MemoryPageHeader
+                        title="사진 속 순간에, 나의 기억을 더하세요"
+                        subtitle="사진과 기억의 단서를 바탕으로 AI가 질문하고, 확인된 답변으로 추억 노트를 만듭니다."
+                        compact={mobile}
+                    />
 
-                    <View
-                        style={[
-                            styles.uploadWorkspace,
-                            isNarrow && styles.uploadWorkspaceNarrow,
-                            mobile && styles.uploadWorkspaceMobile,
-                        ]}
-                    >
+                    <View style={[styles.uploadWorkspace, isNarrow && styles.uploadWorkspaceNarrow]}>
                         <View style={[styles.uploadColumn, isNarrow && styles.fullWidthColumn]}>
                             <DroppableAlbumCard
                                 item={{ id: 'new_upload_card', fileNames: [], imageUrls: [] }}
                                 onDropFiles={activeEditingMemory ? undefined : handleDropFilesOnNewUploadCard}
-                                mobile={mobile}
                             >
                                 <View style={styles.cardHeaderRow}>
                                     <Text style={styles.cardTitle}>
                                         {activeEditingMemory
                                             ? `‘${activeEditingMemory.curatedNote?.title || activeEditingMemory.analysis?.title || '기존 추억'}’ 재분석`
-                                            : mobile
-                                              ? selectedImages.length > 0
-                                                  ? `선택한 사진 · ${selectedImages.length}장`
-                                                  : '사진을 선택해 주세요'
-                                              : '새 추억 사진 등록'}
+                                            : '새 추억 사진 등록'}
                                     </Text>
                                 </View>
 
@@ -508,7 +486,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                     </View>
                                 ) : null}
 
-                                <View style={[styles.largeDropZone, mobile && styles.largeDropZoneMobile]}>
+                                <View style={styles.largeDropZone}>
                                     {selectedImages.length === 0 ? (
                                         <TouchableOpacity
                                             activeOpacity={0.8}
@@ -559,18 +537,8 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                 ) : (
                                     <>
                                         <Text style={styles.fileTypeHint}>JPG · PNG · WEBP / 여러 장 선택 가능</Text>
-                                        <TouchableOpacity
-                                            style={[styles.fileSelectBtn, mobile && styles.fileSelectBtnMobile]}
-                                            onPress={handlePickImages}
-                                        >
-                                            <Text
-                                                style={[
-                                                    styles.fileSelectBtnText,
-                                                    mobile && styles.fileSelectBtnTextMobile,
-                                                ]}
-                                            >
-                                                사진 추가
-                                            </Text>
+                                        <TouchableOpacity style={styles.fileSelectBtn} onPress={handlePickImages}>
+                                            <Text style={styles.fileSelectBtnText}>사진 선택</Text>
                                         </TouchableOpacity>
 
                                         <View style={styles.optionRow}>
@@ -582,7 +550,13 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                                     </TouchableOpacity>
                                                 </View>
                                             ) : (
-                                                mobile ? null : (
+                                                mobile ? (
+                                                    <View style={styles.mobileHintBox}>
+                                                        <Text style={styles.mobileHintText}>
+                                                            음성 파일 첨부는 현재 웹에서 지원됩니다.
+                                                        </Text>
+                                                    </View>
+                                                ) : (
                                                     <TouchableOpacity style={styles.audioAddBtn} onPress={handlePickAudio}>
                                                         <Text style={styles.audioAddBtnText}>음성 파일 첨부 · 선택</Text>
                                                     </TouchableOpacity>
@@ -618,95 +592,54 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                         </ScrollView>
                                     </>
                                 )}
-
-                                {mobile ? (
-                                    <View style={[styles.actionButtonRow, styles.actionButtonRowMobile]}>
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.actionSubmitBtn,
-                                                styles.actionSubmitBtnMobile,
-                                                (isProcessing || selectedImages.length === 0) &&
-                                                    styles.actionSubmitBtnDisabled,
-                                            ]}
-                                            onPress={handleStartProcess}
-                                            disabled={isProcessing || selectedImages.length === 0}
-                                        >
-                                            {isProcessing ? (
-                                                <View style={styles.loadingRow}>
-                                                    <ActivityIndicator color="#fff" size="small" />
-                                                    <Text style={styles.actionSubmitBtnText}>
-                                                        {statusMessage || '분석 중...'}
-                                                    </Text>
-                                                </View>
-                                            ) : (
-                                                <Text style={styles.actionSubmitBtnText}>
-                                                    {activeEditingMemory
-                                                        ? '사진으로 인터뷰 다시 만들기'
-                                                        : selectedImages.length > 0
-                                                          ? `${selectedImages.length}장의 사진으로 인터뷰 시작`
-                                                          : 'AI 기억 인터뷰 시작'}
-                                                </Text>
-                                            )}
-                                        </TouchableOpacity>
-                                        {activeEditingMemory ? (
-                                            <TouchableOpacity
-                                                style={styles.cancelReanalysisBtn}
-                                                onPress={handleCancelReanalysis}
-                                            >
-                                                <Text style={styles.cancelReanalysisBtnText}>재분석 취소</Text>
-                                            </TouchableOpacity>
-                                        ) : null}
-                                    </View>
-                                ) : null}
                             </DroppableAlbumCard>
                         </View>
 
-                        {!mobile ? (
-                            <View style={[styles.contextCard, isNarrow && styles.fullWidthColumn]}>
-                                <MemoryContextForm
-                                    value={memoryContext}
-                                    onChange={setMemoryContext}
-                                    disabled={isProcessing}
-                                />
+                        <View
+                            style={[
+                                styles.contextCard,
+                                isNarrow && styles.fullWidthColumn,
+                                mobile && styles.contextCardMobile,
+                            ]}
+                        >
+                            <MemoryContextForm
+                                value={memoryContext}
+                                onChange={setMemoryContext}
+                                disabled={isProcessing}
+                            />
 
-                                <View style={styles.actionButtonRow}>
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.actionSubmitBtn,
-                                            (isProcessing || selectedImages.length === 0) &&
-                                                styles.actionSubmitBtnDisabled,
-                                        ]}
-                                        onPress={handleStartProcess}
-                                        disabled={isProcessing || selectedImages.length === 0}
-                                    >
-                                        {isProcessing ? (
-                                            <View style={styles.loadingRow}>
-                                                <ActivityIndicator color="#fff" size="small" />
-                                                <Text style={styles.actionSubmitBtnText}>
-                                                    {statusMessage || '분석 중...'}
-                                                </Text>
-                                            </View>
-                                        ) : (
-                                            <Text style={styles.actionSubmitBtnText}>
-                                                {activeEditingMemory
-                                                    ? '기억 단서를 반영해 인터뷰 다시 만들기'
-                                                    : selectedImages.length > 0
-                                                      ? `${selectedImages.length}장의 사진으로 AI 기억 인터뷰 시작`
-                                                      : 'AI 기억 인터뷰 시작'}
-                                            </Text>
-                                        )}
+                            <View style={styles.actionButtonRow}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.actionSubmitBtn,
+                                        mobile && styles.actionSubmitBtnMobile,
+                                        (isProcessing || selectedImages.length === 0) && styles.actionSubmitBtnDisabled,
+                                    ]}
+                                    onPress={handleStartProcess}
+                                    disabled={isProcessing || selectedImages.length === 0}
+                                >
+                                    {isProcessing ? (
+                                        <View style={styles.loadingRow}>
+                                            <ActivityIndicator color="#fff" size="small" />
+                                            <Text style={styles.actionSubmitBtnText}>{statusMessage || '분석 중...'}</Text>
+                                        </View>
+                                    ) : (
+                                        <Text style={styles.actionSubmitBtnText}>
+                                            {activeEditingMemory
+                                                ? '기억 단서를 반영해 인터뷰 다시 만들기'
+                                                : selectedImages.length > 0
+                                                  ? `${selectedImages.length}장의 사진으로 AI 기억 인터뷰 시작`
+                                                  : 'AI 기억 인터뷰 시작'}
+                                        </Text>
+                                    )}
+                                </TouchableOpacity>
+                                {activeEditingMemory ? (
+                                    <TouchableOpacity style={styles.cancelReanalysisBtn} onPress={handleCancelReanalysis}>
+                                        <Text style={styles.cancelReanalysisBtnText}>재분석 취소</Text>
                                     </TouchableOpacity>
-                                    {activeEditingMemory ? (
-                                        <TouchableOpacity
-                                            style={styles.cancelReanalysisBtn}
-                                            onPress={handleCancelReanalysis}
-                                        >
-                                            <Text style={styles.cancelReanalysisBtnText}>재분석 취소</Text>
-                                        </TouchableOpacity>
-                                    ) : null}
-                                </View>
+                                ) : null}
                             </View>
-                        ) : null}
+                        </View>
                     </View>
 
                     {/* 현재 작업 중인 앨범 카드 목록 섹션 */}
@@ -763,7 +696,6 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                                 item={item}
                                                 isSelected={selectedEnhanceMemory?.id === item.id}
                                                 onDropFiles={handleDropFilesOnAlbum}
-                                                mobile={mobile}
                                             >
                                                 <View
                                                     style={[
@@ -917,13 +849,12 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                         estimatedEra: interviewData.estimatedEra,
                         sceneFacts: interviewData.sceneFacts,
                         visualClues: interviewData.visualClues,
-                        memoryContext: mobile ? memoryContext : interviewData.memoryContext,
+                        memoryContext: interviewData.memoryContext,
                     }}
                     questions={interviewData.interviewQuestions}
                     imageUrls={selectedImages.map((image) => image.uri).filter((uri): uri is string => Boolean(uri))}
                     initialAnswers={initialAnswers}
                     initialExtraStory={initialExtraStory}
-                    deferContextUntilAfterInterview={mobile}
                     onComplete={handleInterviewComplete}
                 />
             )}
@@ -948,7 +879,6 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: memoryColors.canvas },
     scrollContent: { paddingBottom: 64 },
-    scrollContentMobile: { paddingBottom: 116 },
     pageShell: {
         width: '100%',
         maxWidth: 1440,
@@ -957,8 +887,8 @@ const styles = StyleSheet.create({
         paddingTop: 28,
     },
     pageShellNarrow: {
-        paddingHorizontal: 16,
-        paddingTop: 0,
+        paddingHorizontal: memoryLayout.mobilePadding,
+        paddingTop: 22,
     },
     uploadWorkspace: {
         flexDirection: 'row',
@@ -967,7 +897,6 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     uploadWorkspaceNarrow: { flexDirection: 'column' },
-    uploadWorkspaceMobile: { marginBottom: 12 },
     uploadColumn: { width: 420, flexShrink: 0 },
     fullWidthColumn: { width: '100%' },
     contextCard: {
@@ -979,11 +908,7 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.border,
         padding: 24,
     },
-    contextCardMobile: {
-        padding: 16,
-        borderWidth: 0,
-        borderRadius: 20,
-    },
+    contextCardMobile: { padding: 16 },
     cardHeaderRow: { marginBottom: 16 },
     cardTitle: {
         fontSize: 20,
@@ -1019,12 +944,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 14,
-    },
-    largeDropZoneMobile: {
-        minHeight: 142,
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 8,
     },
     dropZoneEmptyClickable: {
         width: '100%',
@@ -1117,16 +1036,6 @@ const styles = StyleSheet.create({
         color: memoryColors.textSecondary,
         fontWeight: '500',
     },
-    fileSelectBtnMobile: {
-        minHeight: 50,
-        borderWidth: 0,
-        borderRadius: 12,
-        backgroundColor: memoryColors.brand,
-    },
-    fileSelectBtnTextMobile: {
-        color: memoryColors.surface,
-        fontWeight: '700',
-    },
     optionRow: { marginBottom: 16 },
     audioChip: {
         flexDirection: 'row',
@@ -1135,7 +1044,7 @@ const styles = StyleSheet.create({
         backgroundColor: memoryColors.brandLight,
         minHeight: 40,
         paddingHorizontal: 12,
-        borderRadius: 12,
+        borderRadius: 8,
     },
     audioChipText: { fontSize: 12, color: memoryColors.brandDark },
     audioRemoveText: {
@@ -1195,7 +1104,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     actionSubmitBtnDisabled: { backgroundColor: memoryColors.textFaint },
-    actionSubmitBtnMobile: { width: '100%', minHeight: 50, justifyContent: 'center' },
+    actionSubmitBtnMobile: { width: '100%' },
     actionSubmitBtnText: {
         color: memoryColors.surface,
         fontWeight: '700',
@@ -1206,13 +1115,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: 10,
-    },
-    actionButtonRowMobile: {
-        width: '100%',
-        flexDirection: 'column',
-        alignItems: 'stretch',
-        flexWrap: 'nowrap',
-        marginTop: 16,
     },
     cancelReanalysisBtn: {
         minHeight: 44,
@@ -1385,3 +1287,4 @@ const styles = StyleSheet.create({
     },
     albumDesc: { fontSize: 13, color: memoryColors.textMuted, lineHeight: 20 },
 });
+
