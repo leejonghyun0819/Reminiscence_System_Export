@@ -11,7 +11,6 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    useWindowDimensions,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +27,7 @@ import {
     MEMORY_PURPOSE_LABELS,
 } from '../types/memoryContext';
 import { memoryColors, memoryFontFamily } from '../constants/memoryTheme';
+import { WebMemoryInterviewPanel } from './web/WebMemoryInterviewPanel';
 
 interface FactsAndClues {
     estimatedEra?: string;
@@ -74,9 +74,8 @@ export function MemoryInterviewModal({
     initialExtraStory = '',
     onComplete,
 }: MemoryInterviewModalProps) {
-    const { width } = useWindowDimensions();
     const insets = useSafeAreaInsets();
-    const isCompact = width < 900;
+    const isCompact = Platform.OS !== 'web';
     const modalTopPadding = Platform.OS === 'ios' ? Math.max(insets.top + 12, 56) : undefined;
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [extraStory, setExtraStory] = useState<string>('');
@@ -245,7 +244,7 @@ export function MemoryInterviewModal({
                         </View>
 
                         <View style={[styles.workspace, isCompact && styles.workspaceCompact]}>
-                            {!isCompact && (
+                            {!isCompact && draftCuratedNote ? (
                                 <View style={styles.photoPanel}>
                                     <Text style={styles.photoPanelTitle}>연결된 사진</Text>
                                     <ScrollView
@@ -284,7 +283,7 @@ export function MemoryInterviewModal({
                                         </Text>
                                     </View>
                                 </View>
-                            )}
+                            ) : null}
 
                             <View style={styles.questionPane}>
                                 {draftCuratedNote ? (
@@ -581,6 +580,34 @@ export function MemoryInterviewModal({
                                             </TouchableOpacity>
                                         </View>
                                     </View>
+                                ) : Platform.OS === 'web' ? (
+                                    <WebMemoryInterviewPanel
+                                        questions={questions}
+                                        imageUrls={imageUrls}
+                                        answers={answers}
+                                        extraStory={extraStory}
+                                        currentStep={currentQuestionStep}
+                                        isSubmitting={isSubmitting}
+                                        statusText={statusText}
+                                        memoryContext={factsAndClues.memoryContext}
+                                        onAnswerChange={handleTextChange}
+                                        onOptionSelect={handleOptionSelect}
+                                        onExtraStoryChange={setExtraStory}
+                                        onPreviewPhoto={(photoIndex) =>
+                                            setPreviewImage({
+                                                url: imageUrls[photoIndex - 1],
+                                                photoNumber: photoIndex,
+                                            })
+                                        }
+                                        onPrevious={() => {
+                                            if (currentQuestionStep === 0) onClose();
+                                            else moveCompactInterview(-1);
+                                        }}
+                                        onNext={() => {
+                                            if (isCompactExtraStoryStep) handleSubmit();
+                                            else moveCompactInterview(1);
+                                        }}
+                                    />
                                 ) : (
                                     <>
                                 <ScrollView
