@@ -7,7 +7,6 @@ import {
     TouchableOpacity,
     ScrollView,
     Image,
-    ActivityIndicator,
     Alert,
     Platform,
     useWindowDimensions,
@@ -24,7 +23,7 @@ import {
     CuratedNoteData,
 } from '../../services/geminiService';
 import { MemoryInterviewModal } from '../../components/MemoryInterviewModal';
-import { MemoryContextForm } from '../../components/MemoryContextForm';
+import { MemoryContextStepModal } from '../../components/MemoryContextStepModal';
 import { DEFAULT_MEMORY_CONTEXT, MemoryContextData } from '../../types/memoryContext';
 import { DroppableAlbumCard } from '../../features/index/DroppableAlbumCard';
 import { GalleryViewerModal } from '../../features/index/GalleryViewerModal';
@@ -56,6 +55,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
     });
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const [statusMessage, setStatusMessage] = useState<string>('');
+    const [contextStepVisible, setContextStepVisible] = useState<boolean>(false);
 
     // 인터뷰 모달 상태
     const [interviewModalVisible, setInterviewModalVisible] = useState<boolean>(false);
@@ -215,6 +215,14 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
         };
     };
 
+    const handleOpenContextStep = () => {
+        if (selectedImages.length === 0) {
+            Alert.alert('안내', '사진을 1장 이상 등록해주세요.');
+            return;
+        }
+        setContextStepVisible(true);
+    };
+
     // AI 모드 분석 및 신규 등록 처리
     const handleStartProcess = async () => {
         if (selectedImages.length === 0) {
@@ -265,6 +273,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 detectedMode,
                 memoryContext: interviewResult.memoryContext || memoryContext,
             });
+            setContextStepVisible(false);
             setInterviewModalVisible(true);
         } catch (error: any) {
             Alert.alert('실패', error?.message || '사진별 기억 질문을 만드는 중 문제가 발생했습니다.');
@@ -299,6 +308,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
     };
 
     const handleCancelReanalysis = () => {
+        setContextStepVisible(false);
         setActiveEditingMemory(null);
         setSelectedImages([]);
         setSelectedAudio(null);
@@ -382,6 +392,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
             }
 
             setInterviewModalVisible(false);
+            setContextStepVisible(false);
             setInterviewData(null);
             setActiveEditingMemory(null);
             setInitialAnswers({});
@@ -459,7 +470,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 <View style={[styles.pageShell, isNarrow && styles.pageShellNarrow]}>
                     <MemoryPageHeader
                         title="사진 속 순간에, 나의 기억을 더하세요"
-                        subtitle="사진과 기억의 단서를 바탕으로 AI가 질문하고, 확인된 답변으로 추억 노트를 만듭니다."
+                        subtitle="사진을 먼저 등록하세요. 다음 화면에서 기억 단서를 입력하면 AI가 사진별 인터뷰를 만듭니다."
                         compact={mobile}
                     />
 
@@ -481,7 +492,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                     <View style={styles.reanalysisNotice}>
                                         <Text style={styles.reanalysisNoticeTitle}>기존 앨범 사진을 불러왔습니다</Text>
                                         <Text style={styles.reanalysisNoticeText}>
-                                            오른쪽에서 기억 단서를 고친 뒤 다시 분석하세요. 완료하면 새 앨범을 만들지 않고 기존 앨범을 대체합니다.
+                                            다음 화면에서 기억 단서를 고친 뒤 다시 분석하세요. 완료하면 새 앨범을 만들지 않고 기존 앨범을 대체합니다.
                                         </Text>
                                     </View>
                                 ) : null}
@@ -592,53 +603,36 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                         </ScrollView>
                                     </>
                                 )}
-                            </DroppableAlbumCard>
-                        </View>
 
-                        <View
-                            style={[
-                                styles.contextCard,
-                                isNarrow && styles.fullWidthColumn,
-                                mobile && styles.contextCardMobile,
-                            ]}
-                        >
-                            <MemoryContextForm
-                                value={memoryContext}
-                                onChange={setMemoryContext}
-                                disabled={isProcessing}
-                            />
-
-                            <View style={styles.actionButtonRow}>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.actionSubmitBtn,
-                                        mobile && styles.actionSubmitBtnMobile,
-                                        (isProcessing || selectedImages.length === 0) && styles.actionSubmitBtnDisabled,
-                                    ]}
-                                    onPress={handleStartProcess}
-                                    disabled={isProcessing || selectedImages.length === 0}
-                                >
-                                    {isProcessing ? (
-                                        <View style={styles.loadingRow}>
-                                            <ActivityIndicator color="#fff" size="small" />
-                                            <Text style={styles.actionSubmitBtnText}>{statusMessage || '분석 중...'}</Text>
-                                        </View>
-                                    ) : (
+                                <View style={styles.uploadActionArea}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.actionSubmitBtn,
+                                            mobile && styles.actionSubmitBtnMobile,
+                                            (isProcessing || selectedImages.length === 0) &&
+                                                styles.actionSubmitBtnDisabled,
+                                        ]}
+                                        onPress={handleOpenContextStep}
+                                        disabled={isProcessing || selectedImages.length === 0}
+                                    >
                                         <Text style={styles.actionSubmitBtnText}>
                                             {activeEditingMemory
-                                                ? '기억 단서를 반영해 인터뷰 다시 만들기'
+                                                ? '다음: 기억 단서 다시 작성'
                                                 : selectedImages.length > 0
-                                                  ? `${selectedImages.length}장의 사진으로 AI 기억 인터뷰 시작`
-                                                  : 'AI 기억 인터뷰 시작'}
+                                                  ? `다음: ${selectedImages.length}장의 기억 단서 입력`
+                                                  : '사진을 선택하면 다음 단계로 이동할 수 있어요'}
                                         </Text>
-                                    )}
-                                </TouchableOpacity>
-                                {activeEditingMemory ? (
-                                    <TouchableOpacity style={styles.cancelReanalysisBtn} onPress={handleCancelReanalysis}>
-                                        <Text style={styles.cancelReanalysisBtnText}>재분석 취소</Text>
                                     </TouchableOpacity>
-                                ) : null}
-                            </View>
+                                    {activeEditingMemory ? (
+                                        <TouchableOpacity
+                                            style={styles.cancelReanalysisBtn}
+                                            onPress={handleCancelReanalysis}
+                                        >
+                                            <Text style={styles.cancelReanalysisBtnText}>재분석 취소</Text>
+                                        </TouchableOpacity>
+                                    ) : null}
+                                </View>
+                            </DroppableAlbumCard>
                         </View>
                     </View>
 
@@ -837,6 +831,18 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 </View>
             </ScrollView>
 
+            <MemoryContextStepModal
+                visible={contextStepVisible}
+                imageUrls={selectedImages.map((image) => image.uri).filter((uri): uri is string => Boolean(uri))}
+                value={memoryContext}
+                onChange={setMemoryContext}
+                onBack={() => setContextStepVisible(false)}
+                onSubmit={handleStartProcess}
+                isProcessing={isProcessing}
+                statusMessage={statusMessage}
+                isReanalysis={activeEditingMemory !== null}
+            />
+
             {/* 인터뷰 모달 */}
             {interviewData && (
                 <MemoryInterviewModal
@@ -897,18 +903,8 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     uploadWorkspaceNarrow: { flexDirection: 'column' },
-    uploadColumn: { width: 420, flexShrink: 0 },
+    uploadColumn: { width: '100%' },
     fullWidthColumn: { width: '100%' },
-    contextCard: {
-        flex: 1,
-        minWidth: 0,
-        backgroundColor: memoryColors.surface,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: memoryColors.border,
-        padding: 24,
-    },
-    contextCardMobile: { padding: 16 },
     cardHeaderRow: { marginBottom: 16 },
     cardTitle: {
         fontSize: 20,
@@ -1110,11 +1106,15 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: 14,
     },
-    actionButtonRow: {
+    uploadActionArea: {
         flexDirection: 'row',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: 10,
+        marginTop: 18,
+        paddingTop: 18,
+        borderTopWidth: 1,
+        borderTopColor: memoryColors.border,
     },
     cancelReanalysisBtn: {
         minHeight: 44,
@@ -1131,7 +1131,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
     },
-    loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     albumSection: { marginTop: 2 },
     sectionHeaderRow: {
         flexDirection: 'row',
