@@ -282,6 +282,7 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
                             memories={memoryList}
                             onGenerated={handleGenerated}
                             onCancel={() => setShowBuilder(false)}
+                            mobile={mobile}
                         />
                     ) : null}
 
@@ -310,6 +311,7 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
                                 editStory={editStory}
                                 setEditStory={setEditStory}
                                 onSaveEdit={handleSaveEdit}
+                                mobile={mobile}
                             />
                         ) : (
                             <View style={styles.emptyStateBox}>
