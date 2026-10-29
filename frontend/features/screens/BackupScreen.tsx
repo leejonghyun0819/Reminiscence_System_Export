@@ -22,6 +22,7 @@ import { BackupDetailViewerModal, BackupAlbumMeta } from '../backup/BackupDetail
 import { isVideoUrl } from '../../utils/mediaProcessUtils';
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
+import { MobileScreenHeader } from '../../components/mobile/MobileScreenHeader';
 import { memoryColors, memoryLayout } from '../../constants/memoryTheme';
 import { API_BASE_URL as BACKEND_URL, resolveBackendMediaUrls } from '../../config/api';
 
@@ -598,17 +599,29 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
     return (
         <View style={styles.pageContainer}>
             <MemoryAppHeader />
+            {mobile ? (
+                <MobileScreenHeader
+                    subtitle="보관함"
+                    sectionTitle={activeStorage === 'memory' ? '기억 자료 관리' : '완성된 이야기'}
+                    archiveActive
+                />
+            ) : null}
             <ScrollView
                 style={styles.pageScroll}
-                contentContainerStyle={[styles.modalCard, isNarrow && styles.modalCardNarrow]}
+                contentContainerStyle={[
+                    styles.modalCard,
+                    isNarrow && styles.modalCardNarrow,
+                    mobile && styles.modalCardMobile,
+                ]}
             >
                 {/* 상단 헤더 */}
                 <View style={styles.headerRow}>
-                    <MemoryPageHeader
-                        title="기억과 추억 보관함"
-                        subtitle="노트가 되기 전의 기억 자료와 완성된 추억 노트를 나누어 관리하세요."
-                        compact={mobile}
-                    />
+                    {!mobile ? (
+                        <MemoryPageHeader
+                            title="기억과 추억 보관함"
+                            subtitle="노트가 되기 전의 기억 자료와 완성된 추억 노트를 나누어 관리하세요."
+                        />
+                    ) : null}
                     {!mobile ? (
                         <TouchableOpacity style={styles.backToHomeBtn} onPress={handleCloseOrBack}>
                             <Text style={styles.backToHomeBtnText}>추억 수집으로</Text>
@@ -616,9 +629,14 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
                     ) : null}
                 </View>
 
-                <View style={styles.storageTypeTabs}>
+                <View style={[styles.storageTypeTabs, mobile && styles.storageTypeTabsMobile]}>
                     <TouchableOpacity
-                        style={[styles.storageTypeTab, activeStorage === 'memory' && styles.storageTypeTabActive]}
+                        style={[
+                            styles.storageTypeTab,
+                            mobile && styles.storageTypeTabMobile,
+                            activeStorage === 'memory' && styles.storageTypeTabActive,
+                            mobile && activeStorage === 'memory' && styles.storageTypeTabActiveMobile,
+                        ]}
                         onPress={() => setActiveStorage('memory')}
                     >
                         <Text
@@ -632,7 +650,12 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
                         <Text style={styles.storageTypeTabDescription}>노트 생성 전 · 사진, 인터뷰, 상세 정보</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[styles.storageTypeTab, activeStorage === 'note' && styles.storageTypeTabActive]}
+                        style={[
+                            styles.storageTypeTab,
+                            mobile && styles.storageTypeTabMobile,
+                            activeStorage === 'note' && styles.storageTypeTabActive,
+                            mobile && activeStorage === 'note' && styles.storageTypeTabActiveMobile,
+                        ]}
                         onPress={() => setActiveStorage('note')}
                     >
                         <Text
@@ -649,10 +672,16 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
 
                 {activeStorage === 'memory' ? (
                 <View style={[styles.backupWorkspace, isNarrow && styles.backupWorkspaceNarrow]}>
-                    <View style={[styles.folderSidebar, isNarrow && styles.folderSidebarNarrow]}>
+                    <View
+                        style={[
+                            styles.folderSidebar,
+                            isNarrow && styles.folderSidebarNarrow,
+                            mobile && styles.folderSidebarMobile,
+                        ]}
+                    >
                         <Text style={styles.sidebarTitle}>내 폴더</Text>
                         {/* 대분류 전환 탭 */}
-                        <View style={styles.rootCategoryBar}>
+                        <View style={[styles.rootCategoryBar, mobile && styles.rootCategoryBarMobile]}>
                             <TouchableOpacity
                                 style={[
                                     styles.rootTabBtn,
@@ -1370,9 +1399,10 @@ const styles = StyleSheet.create({
         paddingBottom: 32,
     },
     modalCardNarrow: {
-        paddingHorizontal: memoryLayout.mobilePadding,
-        paddingTop: 22,
+        paddingHorizontal: 16,
+        paddingTop: 0,
     },
+    modalCardMobile: { paddingBottom: 116 },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -1400,6 +1430,14 @@ const styles = StyleSheet.create({
         gap: 12,
         marginBottom: 24,
     },
+    storageTypeTabsMobile: {
+        flexWrap: 'nowrap',
+        gap: 8,
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: memoryColors.surface,
+        marginBottom: 12,
+    },
     storageTypeTab: {
         flexGrow: 1,
         flexBasis: 320,
@@ -1412,10 +1450,21 @@ const styles = StyleSheet.create({
         backgroundColor: memoryColors.surface,
         justifyContent: 'center',
     },
+    storageTypeTabMobile: {
+        flexBasis: 0,
+        minWidth: 0,
+        minHeight: 48,
+        paddingHorizontal: 8,
+        paddingVertical: 7,
+        borderWidth: 0,
+        borderRadius: 14,
+        alignItems: 'center',
+    },
     storageTypeTabActive: {
         borderColor: memoryColors.brand,
         backgroundColor: memoryColors.brandLight,
     },
+    storageTypeTabActiveMobile: { backgroundColor: memoryColors.brandTint },
     storageTypeTabTitle: {
         color: memoryColors.textSecondary,
         fontSize: 15,
@@ -1440,6 +1489,7 @@ const styles = StyleSheet.create({
         padding: 24,
     },
     folderSidebarNarrow: { width: '100%' },
+    folderSidebarMobile: { padding: 16, borderWidth: 0, borderRadius: 20 },
     sidebarTitle: {
         color: memoryColors.text,
         fontSize: 16,
@@ -1488,6 +1538,7 @@ const styles = StyleSheet.create({
         gap: 8,
         marginBottom: 16,
     },
+    rootCategoryBarMobile: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 12 },
     rootTabBtn: {
         paddingVertical: 9,
         paddingHorizontal: 12,

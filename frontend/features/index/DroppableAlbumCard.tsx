@@ -7,10 +7,17 @@ interface DroppableAlbumCardProps {
     item: MemoryItem;
     isSelected?: boolean;
     onDropFiles?: (targetItem: MemoryItem, files: File[]) => void;
+    mobile?: boolean;
     children: React.ReactNode;
 }
 
-export const DroppableAlbumCard: React.FC<DroppableAlbumCardProps> = ({ item, isSelected, onDropFiles, children }) => {
+export const DroppableAlbumCard: React.FC<DroppableAlbumCardProps> = ({
+    item,
+    isSelected,
+    onDropFiles,
+    mobile = false,
+    children,
+}) => {
     const [isDragOver, setIsDragOver] = useState(false);
 
     const handleDragOver = (e: any) => {
@@ -100,7 +107,7 @@ export const DroppableAlbumCard: React.FC<DroppableAlbumCardProps> = ({ item, is
         );
     }
 
-    return <View style={styles.card}>{children}</View>;
+    return <View style={[styles.card, mobile && styles.cardMobile]}>{children}</View>;
 };
 
 const styles = StyleSheet.create({
@@ -115,6 +122,11 @@ const styles = StyleSheet.create({
     cardSelected: {
         borderColor: '#0284C7',
         backgroundColor: '#F8FAFC',
+    },
+    cardMobile: {
+        padding: 16,
+        borderWidth: 0,
+        borderRadius: 20,
     },
     cardDragOver: {
         borderColor: '#0284C7',

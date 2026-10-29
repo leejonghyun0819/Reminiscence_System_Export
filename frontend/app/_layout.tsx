@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { MemoryProvider } from '../context/MemoryContext';
 import { Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
     useEffect(() => {
@@ -14,6 +15,7 @@ export default function RootLayout() {
 
     return (
         <MemoryProvider>
+            <StatusBar style="dark" />
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             </Stack>

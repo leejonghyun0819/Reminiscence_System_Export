@@ -31,6 +31,7 @@ import { GalleryViewerModal } from '../../features/index/GalleryViewerModal';
 import { EditMemoryModal } from '../../features/index/EditMemoryModal';
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
+import { MobileScreenHeader } from '../../components/mobile/MobileScreenHeader';
 import { memoryColors, memoryFontFamily, memoryLayout } from '../../constants/memoryTheme';
 
 export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
@@ -447,25 +448,41 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
 
             <MemoryAppHeader />
 
-            <ScrollView ref={pageScrollRef} contentContainerStyle={styles.scrollContent}>
+            {mobile ? (
+                <MobileScreenHeader
+                    subtitle={activeEditingMemory ? '재인터뷰' : selectedImages.length > 0 ? '사진과 단서' : '새 기억'}
+                    sectionTitle={activeEditingMemory ? '기억 단서 다시 쓰기' : '추억 수집'}
+                />
+            ) : null}
+
+            <ScrollView
+                ref={pageScrollRef}
+                contentContainerStyle={[styles.scrollContent, mobile && styles.scrollContentMobile]}
+            >
                 <View style={[styles.pageShell, isNarrow && styles.pageShellNarrow]}>
-                    <MemoryPageHeader
-                        title="사진 속 순간에, 나의 기억을 더하세요"
-                        subtitle="사진과 기억의 단서를 바탕으로 AI가 질문하고, 확인된 답변으로 추억 노트를 만듭니다."
-                        compact={mobile}
-                    />
+                    {!mobile ? (
+                        <MemoryPageHeader
+                            title="사진 속 순간에, 나의 기억을 더하세요"
+                            subtitle="사진과 기억의 단서를 바탕으로 AI가 질문하고, 확인된 답변으로 추억 노트를 만듭니다."
+                        />
+                    ) : null}
 
                     <View style={[styles.uploadWorkspace, isNarrow && styles.uploadWorkspaceNarrow]}>
                         <View style={[styles.uploadColumn, isNarrow && styles.fullWidthColumn]}>
                             <DroppableAlbumCard
                                 item={{ id: 'new_upload_card', fileNames: [], imageUrls: [] }}
                                 onDropFiles={activeEditingMemory ? undefined : handleDropFilesOnNewUploadCard}
+                                mobile={mobile}
                             >
                                 <View style={styles.cardHeaderRow}>
                                     <Text style={styles.cardTitle}>
                                         {activeEditingMemory
                                             ? `‘${activeEditingMemory.curatedNote?.title || activeEditingMemory.analysis?.title || '기존 추억'}’ 재분석`
-                                            : '새 추억 사진 등록'}
+                                            : mobile
+                                              ? selectedImages.length > 0
+                                                  ? `선택한 사진 · ${selectedImages.length}장`
+                                                  : '사진을 선택해 주세요'
+                                              : '새 추억 사진 등록'}
                                     </Text>
                                 </View>
 
@@ -478,7 +495,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                     </View>
                                 ) : null}
 
-                                <View style={styles.largeDropZone}>
+                                <View style={[styles.largeDropZone, mobile && styles.largeDropZoneMobile]}>
                                     {selectedImages.length === 0 ? (
                                         <TouchableOpacity
                                             activeOpacity={0.8}
@@ -529,8 +546,18 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                 ) : (
                                     <>
                                         <Text style={styles.fileTypeHint}>JPG · PNG · WEBP / 여러 장 선택 가능</Text>
-                                        <TouchableOpacity style={styles.fileSelectBtn} onPress={handlePickImages}>
-                                            <Text style={styles.fileSelectBtnText}>사진 선택</Text>
+                                        <TouchableOpacity
+                                            style={[styles.fileSelectBtn, mobile && styles.fileSelectBtnMobile]}
+                                            onPress={handlePickImages}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.fileSelectBtnText,
+                                                    mobile && styles.fileSelectBtnTextMobile,
+                                                ]}
+                                            >
+                                                사진 추가
+                                            </Text>
                                         </TouchableOpacity>
 
                                         <View style={styles.optionRow}>
@@ -542,13 +569,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                                     </TouchableOpacity>
                                                 </View>
                                             ) : (
-                                                mobile ? (
-                                                    <View style={styles.mobileHintBox}>
-                                                        <Text style={styles.mobileHintText}>
-                                                            음성 파일 첨부는 현재 웹에서 지원됩니다.
-                                                        </Text>
-                                                    </View>
-                                                ) : (
+                                                mobile ? null : (
                                                     <TouchableOpacity style={styles.audioAddBtn} onPress={handlePickAudio}>
                                                         <Text style={styles.audioAddBtnText}>음성 파일 첨부 · 선택</Text>
                                                     </TouchableOpacity>
@@ -598,6 +619,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                 value={memoryContext}
                                 onChange={setMemoryContext}
                                 disabled={isProcessing}
+                                compact={mobile}
                             />
 
                             <View style={styles.actionButtonRow}>
@@ -688,6 +710,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                                 item={item}
                                                 isSelected={selectedEnhanceMemory?.id === item.id}
                                                 onDropFiles={handleDropFilesOnAlbum}
+                                                mobile={mobile}
                                             >
                                                 <View
                                                     style={[
@@ -871,6 +894,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: memoryColors.canvas },
     scrollContent: { paddingBottom: 64 },
+    scrollContentMobile: { paddingBottom: 116 },
     pageShell: {
         width: '100%',
         maxWidth: 1440,
@@ -879,8 +903,8 @@ const styles = StyleSheet.create({
         paddingTop: 28,
     },
     pageShellNarrow: {
-        paddingHorizontal: memoryLayout.mobilePadding,
-        paddingTop: 22,
+        paddingHorizontal: 16,
+        paddingTop: 0,
     },
     uploadWorkspace: {
         flexDirection: 'row',
@@ -900,7 +924,11 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.border,
         padding: 24,
     },
-    contextCardMobile: { padding: 16 },
+    contextCardMobile: {
+        padding: 16,
+        borderWidth: 0,
+        borderRadius: 20,
+    },
     cardHeaderRow: { marginBottom: 16 },
     cardTitle: {
         fontSize: 20,
@@ -936,6 +964,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 14,
+    },
+    largeDropZoneMobile: {
+        minHeight: 142,
+        borderRadius: 16,
+        padding: 12,
+        marginBottom: 8,
     },
     dropZoneEmptyClickable: {
         width: '100%',
@@ -1028,6 +1062,16 @@ const styles = StyleSheet.create({
         color: memoryColors.textSecondary,
         fontWeight: '500',
     },
+    fileSelectBtnMobile: {
+        minHeight: 50,
+        borderWidth: 0,
+        borderRadius: 12,
+        backgroundColor: memoryColors.brand,
+    },
+    fileSelectBtnTextMobile: {
+        color: memoryColors.surface,
+        fontWeight: '700',
+    },
     optionRow: { marginBottom: 16 },
     audioChip: {
         flexDirection: 'row',
@@ -1036,7 +1080,7 @@ const styles = StyleSheet.create({
         backgroundColor: memoryColors.brandLight,
         minHeight: 40,
         paddingHorizontal: 12,
-        borderRadius: 8,
+        borderRadius: 12,
     },
     audioChipText: { fontSize: 12, color: memoryColors.brandDark },
     audioRemoveText: {
@@ -1096,7 +1140,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     actionSubmitBtnDisabled: { backgroundColor: memoryColors.textFaint },
-    actionSubmitBtnMobile: { width: '100%' },
+    actionSubmitBtnMobile: { width: '100%', minHeight: 50, justifyContent: 'center' },
     actionSubmitBtnText: {
         color: memoryColors.surface,
         fontWeight: '700',

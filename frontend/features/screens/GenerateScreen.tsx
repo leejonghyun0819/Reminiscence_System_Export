@@ -7,6 +7,7 @@ import { MagazineBookViewer } from '../../features/generate/MagazineBookViewer';
 import { NoteGenerationPanel } from '../../features/generate/NoteGenerationPanel';
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
+import { MobileScreenHeader } from '../../components/mobile/MobileScreenHeader';
 import { memoryColors, memoryLayout } from '../../constants/memoryTheme';
 
 export default function GenerateScreen({ mobile = false }: { mobile?: boolean }) {
@@ -214,22 +215,32 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
     return (
         <View style={styles.container}>
             <MemoryAppHeader />
-            <ScrollView style={styles.pageScroll} contentContainerStyle={styles.pageScrollContent}>
+            {mobile ? (
+                <MobileScreenHeader
+                    subtitle="노트 만들기"
+                    sectionTitle={showBuilder ? '추억 선택' : activeNote ? '포토북 결과' : '내 추억 노트'}
+                />
+            ) : null}
+            <ScrollView
+                style={styles.pageScroll}
+                contentContainerStyle={[styles.pageScrollContent, mobile && styles.pageScrollContentMobile]}
+            >
                 <View style={[styles.pageShell, mobile && styles.pageShellMobile]}>
                     <View style={[styles.headerBar, mobile && styles.headerBarMobile]}>
-                        <MemoryPageHeader
-                            title={
-                                showBuilder
-                                    ? '완성된 추억들을 한 권의 이야기로 엮으세요'
-                                    : '내 기억으로 완성한 추억 노트'
-                            }
-                            subtitle={
-                                showBuilder
-                                    ? 'AI 추억 노트 · 사진 분석과 인터뷰 답변을 바탕으로 포토북 이야기를 만듭니다.'
-                                    : '완성된 노트의 제목과 이야기를 다듬고 인쇄하거나 PDF로 남기세요.'
-                            }
-                            compact={mobile}
-                        />
+                        {!mobile ? (
+                            <MemoryPageHeader
+                                title={
+                                    showBuilder
+                                        ? '완성된 추억들을 한 권의 이야기로 엮으세요'
+                                        : '내 기억으로 완성한 추억 노트'
+                                }
+                                subtitle={
+                                    showBuilder
+                                        ? 'AI 추억 노트 · 사진 분석과 인터뷰 답변을 바탕으로 포토북 이야기를 만듭니다.'
+                                        : '완성된 노트의 제목과 이야기를 다듬고 인쇄하거나 PDF로 남기세요.'
+                                }
+                            />
+                        ) : null}
 
                         <View style={[styles.headerRightActions, mobile && styles.headerRightActionsMobile]}>
                             <TouchableOpacity
@@ -267,6 +278,10 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
                         </View>
                     </View>
 
+                    {mobile && showBuilder ? (
+                        <Text style={styles.mobileHeroTitle}>한 권에 담을 추억을{`\n`}골라 주세요</Text>
+                    ) : null}
+
                     <View style={[styles.betaNotice, mobile && styles.betaNoticeMobile]}>
                         <Text style={styles.betaBadge}>BETA</Text>
                         <View style={styles.betaNoticeCopy}>
@@ -282,6 +297,7 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
                             memories={memoryList}
                             onGenerated={handleGenerated}
                             onCancel={() => setShowBuilder(false)}
+                            mobile={mobile}
                         />
                     ) : null}
 
@@ -310,6 +326,7 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
                                 editStory={editStory}
                                 setEditStory={setEditStory}
                                 onSaveEdit={handleSaveEdit}
+                                mobile={mobile}
                             />
                         ) : (
                             <View style={styles.emptyStateBox}>
@@ -331,6 +348,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: memoryColors.canvas },
     pageScroll: { flex: 1 },
     pageScrollContent: { paddingBottom: 64 },
+    pageScrollContentMobile: { paddingBottom: 116 },
     pageShell: {
         width: '100%',
         maxWidth: 1440,
@@ -339,8 +357,8 @@ const styles = StyleSheet.create({
         paddingTop: 28,
     },
     pageShellMobile: {
-        paddingHorizontal: memoryLayout.mobilePadding,
-        paddingTop: 20,
+        paddingHorizontal: 16,
+        paddingTop: 0,
     },
     headerBar: {
         flexDirection: 'row',
@@ -350,6 +368,13 @@ const styles = StyleSheet.create({
         gap: 20,
     },
     headerBarMobile: { gap: 4 },
+    mobileHeroTitle: {
+        color: memoryColors.text,
+        fontSize: 25,
+        lineHeight: 36,
+        fontWeight: '700',
+        marginBottom: 12,
+    },
     betaBadge: {
         fontSize: 12,
         fontWeight: '700',

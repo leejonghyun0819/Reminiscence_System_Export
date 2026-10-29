@@ -16,6 +16,7 @@ import { EnhanceCompareViewer } from '../../features/enhance/EnhanceCompareViewe
 import { EnhanceAlbumSelector } from '../../features/enhance/EnhanceAlbumSelector';
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
+import { MobileScreenHeader } from '../../components/mobile/MobileScreenHeader';
 import { memoryColors, memoryLayout } from '../../constants/memoryTheme';
 import {
     API_BASE_URL as BACKEND_URL,
@@ -139,49 +140,61 @@ export default function EnhanceScreen({ mobile = false }: { mobile?: boolean }) 
         }
     };
 
+    const modeTabs = (
+        <View style={[styles.modeTabContainer, mobile && styles.modeTabContainerMobile]}>
+            <TouchableOpacity
+                style={[styles.modeTabBtn, mobile && styles.modeTabBtnMobile, activeMode === 'enhance' && styles.modeTabBtnActive]}
+                onPress={() => setActiveMode('enhance')}
+            >
+                <Text style={[styles.modeTabBtnText, activeMode === 'enhance' && styles.modeTabBtnTextActive]}>
+                    {mobile ? '초고화질 개선' : '⚡ 초고화질 개선 (Super Resolution)'}
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[
+                    styles.modeTabBtn,
+                    mobile && styles.modeTabBtnMobile,
+                    activeMode === 'colorize' && styles.modeTabBtnActiveColorize,
+                ]}
+                onPress={() => setActiveMode('colorize')}
+            >
+                <Text
+                    style={[
+                        styles.modeTabBtnText,
+                        activeMode === 'colorize' && styles.modeTabBtnTextActiveColorize,
+                    ]}
+                >
+                    {mobile ? '흑백 컬러 복원' : '🎨 흑백 사진 컬러 복원 (Colorize)'}
+                </Text>
+            </TouchableOpacity>
+        </View>
+    );
+
     return (
         <View style={styles.screen}>
             <MemoryAppHeader />
-            <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+            {mobile ? <MobileScreenHeader subtitle="화질 개선" sectionTitle="복원 대상 선택" /> : null}
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={[styles.contentContainer, mobile && styles.contentContainerMobile]}
+            >
                 <View style={[styles.wrapper, isNarrow && styles.wrapperNarrow]}>
-                    <MemoryPageHeader
-                        title="오래된 사진을 선명하게, 다시 만나세요"
-                        subtitle="YouCam AI 사진 복원실 · 초고화질 개선과 흑백 사진 컬러 복원"
-                        compact={mobile}
-                    >
-                        <View style={styles.modeTabContainer}>
-                            <TouchableOpacity
-                                style={[styles.modeTabBtn, activeMode === 'enhance' && styles.modeTabBtnActive]}
-                                onPress={() => setActiveMode('enhance')}
-                            >
-                                <Text
-                                    style={[
-                                        styles.modeTabBtnText,
-                                        activeMode === 'enhance' && styles.modeTabBtnTextActive,
-                                    ]}
-                                >
-                                    ⚡ 초고화질 개선 (Super Resolution)
-                                </Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[
-                                    styles.modeTabBtn,
-                                    activeMode === 'colorize' && styles.modeTabBtnActiveColorize,
-                                ]}
-                                onPress={() => setActiveMode('colorize')}
-                            >
-                                <Text
-                                    style={[
-                                        styles.modeTabBtnText,
-                                        activeMode === 'colorize' && styles.modeTabBtnTextActiveColorize,
-                                    ]}
-                                >
-                                    🎨 흑백 사진 컬러 복원 (Colorize)
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </MemoryPageHeader>
+                    {!mobile ? (
+                        <MemoryPageHeader
+                            title="오래된 사진을 선명하게, 다시 만나세요"
+                            subtitle="YouCam AI 사진 복원실 · 초고화질 개선과 흑백 사진 컬러 복원"
+                        >
+                            {modeTabs}
+                        </MemoryPageHeader>
+                    ) : (
+                        <>
+                            <Text style={styles.mobileHeroTitle}>더 선명하게 남길 사진을{`\n`}선택해 주세요</Text>
+                            <View style={styles.mobileModeCard}>
+                                <Text style={styles.mobileCardTitle}>복원 방식</Text>
+                                {modeTabs}
+                            </View>
+                        </>
+                    )}
 
                     <View style={[styles.workspace, isNarrow && styles.workspaceNarrow]}>
                         <View style={[styles.selectorColumn, isNarrow && styles.selectorColumnNarrow]}>
@@ -277,7 +290,7 @@ export default function EnhanceScreen({ mobile = false }: { mobile?: boolean }) 
                                         />
                                     ) : (
                                         <View style={styles.singleViewContainer}>
-                                            <View style={styles.singleImageBox}>
+                                            <View style={[styles.singleImageBox, mobile && styles.singleImageBoxMobile]}>
                                                 {currentImageUrl && (
                                                     <Image
                                                         source={{ uri: currentImageUrl }}
@@ -368,6 +381,7 @@ const styles = StyleSheet.create({
     screen: { flex: 1, backgroundColor: memoryColors.canvas },
     container: { flex: 1, backgroundColor: memoryColors.canvas },
     contentContainer: { paddingBottom: 64, alignItems: 'center' },
+    contentContainerMobile: { paddingBottom: 116 },
     wrapper: {
         width: '100%',
         maxWidth: 1440,
@@ -375,8 +389,8 @@ const styles = StyleSheet.create({
         paddingTop: 28,
     },
     wrapperNarrow: {
-        paddingHorizontal: memoryLayout.mobilePadding,
-        paddingTop: 22,
+        paddingHorizontal: 16,
+        paddingTop: 0,
     },
     workspace: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
     workspaceNarrow: { flexDirection: 'column' },
@@ -390,6 +404,7 @@ const styles = StyleSheet.create({
         maxWidth: '100%',
         marginTop: 16,
     },
+    modeTabContainerMobile: { width: '100%', marginTop: 0, gap: 7 },
     modeTabBtn: {
         flex: 1,
         paddingVertical: 12,
@@ -399,6 +414,15 @@ const styles = StyleSheet.create({
         backgroundColor: memoryColors.surface,
         borderWidth: 1,
         borderColor: memoryColors.border,
+    },
+    modeTabBtnMobile: {
+        flexGrow: 0,
+        flexShrink: 1,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 999,
+        borderWidth: 0,
+        backgroundColor: memoryColors.subtle,
     },
     modeTabBtnActive: {
         backgroundColor: memoryColors.brand,
@@ -422,7 +446,28 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.border,
         padding: 24,
     },
-    mainCardMobile: { padding: 14 },
+    mainCardMobile: { padding: 16, borderWidth: 0, borderRadius: 20 },
+    mobileHeroTitle: {
+        color: memoryColors.text,
+        fontSize: 24,
+        lineHeight: 35,
+        fontWeight: '700',
+        marginBottom: 12,
+    },
+    mobileModeCard: {
+        width: '100%',
+        padding: 16,
+        borderRadius: 20,
+        backgroundColor: memoryColors.surface,
+        marginBottom: 12,
+    },
+    mobileCardTitle: {
+        color: memoryColors.text,
+        fontSize: 17,
+        lineHeight: 25,
+        fontWeight: '700',
+        marginBottom: 8,
+    },
     albumSelectHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -513,6 +558,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         position: 'relative',
     },
+    singleImageBoxMobile: { height: 190, borderRadius: 16, marginBottom: 12 },
     previewImg: { width: '100%', height: '100%' },
     statusBadge: {
         position: 'absolute',
@@ -532,6 +578,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
+        minHeight: 50,
     },
     colorizeActionBtn: {
         backgroundColor: memoryColors.brand,

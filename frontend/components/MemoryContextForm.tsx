@@ -13,12 +13,13 @@ interface MemoryContextFormProps {
     value: MemoryContextData;
     onChange: (nextValue: MemoryContextData) => void;
     disabled?: boolean;
+    compact?: boolean;
 }
 
 const MEMORY_OWNERS: MemoryOwner[] = ['self', 'family', 'unknown'];
 const MEMORY_PURPOSES: MemoryPurpose[] = ['personal_record', 'family_archive', 'gift', 'organize'];
 
-export function MemoryContextForm({ value, onChange, disabled = false }: MemoryContextFormProps) {
+export function MemoryContextForm({ value, onChange, disabled = false, compact = false }: MemoryContextFormProps) {
     const updateField = <Key extends keyof MemoryContextData>(key: Key, fieldValue: MemoryContextData[Key]) => {
         onChange({
             ...value,
@@ -28,15 +29,20 @@ export function MemoryContextForm({ value, onChange, disabled = false }: MemoryC
 
     return (
         <View style={styles.container}>
-            <View style={styles.headingRow}>
-                <View style={styles.stepBadge}>
-                    <Text style={styles.stepBadgeText}>기억 단서</Text>
-                </View>
+            <View style={[styles.headingRow, compact && styles.headingRowCompact]}>
+                {!compact ? (
+                    <View style={styles.stepBadge}>
+                        <Text style={styles.stepBadgeText}>기억 단서</Text>
+                    </View>
+                ) : null}
                 <View style={styles.headingTextArea}>
-                    <Text style={styles.title}>AI가 길을 잃지 않도록 먼저 알려주세요</Text>
-                    <Text style={styles.description}>
-                        모르는 항목은 비워도 됩니다. 입력한 사실은 우선 반영하고, 비어 있는 부분은 사진별 질문으로
-                        확인합니다.
+                    <Text style={[styles.title, compact && styles.titleCompact]}>
+                        {compact ? '기억의 단서' : 'AI가 길을 잃지 않도록 먼저 알려주세요'}
+                    </Text>
+                    <Text style={[styles.description, compact && styles.descriptionCompact]}>
+                        {compact
+                            ? '모르는 항목은 비워도 괜찮아요.'
+                            : '모르는 항목은 비워도 됩니다. 입력한 사실은 우선 반영하고, 비어 있는 부분은 사진별 질문으로 확인합니다.'}
                     </Text>
                 </View>
             </View>
@@ -83,11 +89,11 @@ export function MemoryContextForm({ value, onChange, disabled = false }: MemoryC
                 })}
             </View>
 
-            <View style={styles.inputGrid}>
+            <View style={[styles.inputGrid, compact && styles.inputGridCompact]}>
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>대략적인 시기</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, compact && styles.inputCompact]}
                         value={value.approximateTime || ''}
                         onChangeText={(text) => updateField('approximateTime', text)}
                         placeholder="예: 2018년 여름, 초등학교 저학년 무렵"
@@ -100,7 +106,7 @@ export function MemoryContextForm({ value, onChange, disabled = false }: MemoryC
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>장소 단서</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, compact && styles.inputCompact]}
                         value={value.placeHint || ''}
                         onChangeText={(text) => updateField('placeHint', text)}
                         placeholder="예: 스페인 말라가, 할머니 집 마당"
@@ -113,7 +119,7 @@ export function MemoryContextForm({ value, onChange, disabled = false }: MemoryC
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>함께한 사람</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, compact && styles.inputCompact]}
                         value={value.peopleHint || ''}
                         onChangeText={(text) => updateField('peopleHint', text)}
                         placeholder="예: 어머니와 동생, 대학 친구 두 명"
@@ -126,7 +132,7 @@ export function MemoryContextForm({ value, onChange, disabled = false }: MemoryC
 
             <Text style={styles.inputLabel}>사진을 고른 이유나 기억나는 사건</Text>
             <TextInput
-                style={[styles.input, styles.multilineInput]}
+                style={[styles.input, styles.multilineInput, compact && styles.inputCompact]}
                 value={value.additionalContext || ''}
                 onChangeText={(text) => updateField('additionalContext', text)}
                 placeholder="예: 아버지가 처음 사준 카메라로 찍은 여행이고, 항구에서 길을 잃었던 일이 기억나요."
@@ -150,6 +156,7 @@ const styles = StyleSheet.create({
         gap: 12,
         marginBottom: 18,
     },
+    headingRowCompact: { marginBottom: 14 },
     stepBadge: {
         backgroundColor: memoryColors.brandLight,
         borderRadius: 999,
@@ -172,6 +179,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontFamily: memoryFontFamily,
     },
+    titleCompact: { fontSize: 17, lineHeight: 25 },
     description: {
         color: memoryColors.textMuted,
         fontSize: 12,
@@ -179,6 +187,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
         fontFamily: memoryFontFamily,
     },
+    descriptionCompact: { fontSize: 12, lineHeight: 17 },
     label: {
         color: memoryColors.text,
         fontSize: 13,
@@ -221,6 +230,7 @@ const styles = StyleSheet.create({
         gap: 12,
         marginBottom: 14,
     },
+    inputGridCompact: { flexDirection: 'column', gap: 10 },
     inputGroup: {
         flexGrow: 1,
         flexBasis: 190,
@@ -244,6 +254,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         fontFamily: memoryFontFamily,
     },
+    inputCompact: { minHeight: 48, borderRadius: 12, paddingHorizontal: 13 },
     multilineInput: {
         minHeight: 48,
     },
