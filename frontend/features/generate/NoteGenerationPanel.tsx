@@ -403,9 +403,9 @@ const styles = StyleSheet.create({
     footerMobile: { flexDirection: 'column', alignItems: 'stretch' },
     selectionText: { fontSize: 12, color: '#475569', fontWeight: '700' },
     generateButton: {
-        minWidth: 176,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
+        minWidth: 240,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
         borderRadius: 8,
         backgroundColor: memoryColors.brand,
         alignItems: 'center',
