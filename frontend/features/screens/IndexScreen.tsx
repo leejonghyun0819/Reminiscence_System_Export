@@ -30,6 +30,7 @@ import { GalleryViewerModal } from '../../features/index/GalleryViewerModal';
 import { EditMemoryModal } from '../../features/index/EditMemoryModal';
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
+import { WebMemoryContextPanel } from '../../components/web/WebMemoryContextPanel';
 import { memoryColors, memoryFontFamily, memoryLayout } from '../../constants/memoryTheme';
 
 export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
@@ -470,12 +471,22 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 <View style={[styles.pageShell, isNarrow && styles.pageShellNarrow]}>
                     <MemoryPageHeader
                         title="사진 속 순간에, 나의 기억을 더하세요"
-                        subtitle="사진을 먼저 등록하세요. 다음 화면에서 기억 단서를 입력하면 AI가 사진별 인터뷰를 만듭니다."
+                        subtitle={
+                            mobile
+                                ? '사진을 먼저 등록하세요. 다음 화면에서 기억 단서를 입력하면 AI가 사진별 인터뷰를 만듭니다.'
+                                : '사진과 기억 단서를 한 화면에서 함께 입력하면 AI가 사진별 인터뷰를 만듭니다.'
+                        }
                         compact={mobile}
                     />
 
                     <View style={[styles.uploadWorkspace, isNarrow && styles.uploadWorkspaceNarrow]}>
-                        <View style={[styles.uploadColumn, isNarrow && styles.fullWidthColumn]}>
+                        <View
+                            style={[
+                                styles.uploadColumn,
+                                !mobile && !isNarrow && styles.webUploadColumn,
+                                isNarrow && styles.fullWidthColumn,
+                            ]}
+                        >
                             <DroppableAlbumCard
                                 item={{ id: 'new_upload_card', fileNames: [], imageUrls: [] }}
                                 onDropFiles={activeEditingMemory ? undefined : handleDropFilesOnNewUploadCard}
@@ -604,36 +615,58 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                     </>
                                 )}
 
-                                <View style={styles.uploadActionArea}>
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.actionSubmitBtn,
-                                            mobile && styles.actionSubmitBtnMobile,
-                                            (isProcessing || selectedImages.length === 0) &&
-                                                styles.actionSubmitBtnDisabled,
-                                        ]}
-                                        onPress={handleOpenContextStep}
-                                        disabled={isProcessing || selectedImages.length === 0}
-                                    >
-                                        <Text style={styles.actionSubmitBtnText}>
-                                            {activeEditingMemory
-                                                ? '다음: 기억 단서 다시 작성'
-                                                : selectedImages.length > 0
-                                                  ? `다음: ${selectedImages.length}장의 기억 단서 입력`
-                                                  : '사진을 선택하면 다음 단계로 이동할 수 있어요'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                    {activeEditingMemory ? (
+                                {mobile ? (
+                                    <View style={styles.uploadActionArea}>
                                         <TouchableOpacity
-                                            style={styles.cancelReanalysisBtn}
-                                            onPress={handleCancelReanalysis}
+                                            style={[
+                                                styles.actionSubmitBtn,
+                                                styles.actionSubmitBtnMobile,
+                                                (isProcessing || selectedImages.length === 0) &&
+                                                    styles.actionSubmitBtnDisabled,
+                                            ]}
+                                            onPress={handleOpenContextStep}
+                                            disabled={isProcessing || selectedImages.length === 0}
                                         >
-                                            <Text style={styles.cancelReanalysisBtnText}>재분석 취소</Text>
+                                            <Text style={styles.actionSubmitBtnText}>
+                                                {activeEditingMemory
+                                                    ? '다음: 기억 단서 다시 작성'
+                                                    : selectedImages.length > 0
+                                                      ? `다음: ${selectedImages.length}장의 기억 단서 입력`
+                                                      : '사진을 선택하면 다음 단계로 이동할 수 있어요'}
+                                            </Text>
                                         </TouchableOpacity>
-                                    ) : null}
-                                </View>
+                                        {activeEditingMemory ? (
+                                            <TouchableOpacity
+                                                style={styles.cancelReanalysisBtn}
+                                                onPress={handleCancelReanalysis}
+                                            >
+                                                <Text style={styles.cancelReanalysisBtnText}>재분석 취소</Text>
+                                            </TouchableOpacity>
+                                        ) : null}
+                                    </View>
+                                ) : null}
                             </DroppableAlbumCard>
                         </View>
+
+                        {!mobile ? (
+                            <View
+                                style={[
+                                    styles.webContextColumn,
+                                    isNarrow && styles.webContextColumnNarrow,
+                                ]}
+                            >
+                                <WebMemoryContextPanel
+                                    value={memoryContext}
+                                    onChange={setMemoryContext}
+                                    selectedImageCount={selectedImages.length}
+                                    isProcessing={isProcessing}
+                                    statusMessage={statusMessage}
+                                    isReanalysis={activeEditingMemory !== null}
+                                    onSubmit={handleStartProcess}
+                                    onCancelReanalysis={handleCancelReanalysis}
+                                />
+                            </View>
+                        ) : null}
                     </View>
 
                     {/* 현재 작업 중인 앨범 카드 목록 섹션 */}
@@ -831,17 +864,19 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 </View>
             </ScrollView>
 
-            <MemoryContextStepModal
-                visible={contextStepVisible}
-                imageUrls={selectedImages.map((image) => image.uri).filter((uri): uri is string => Boolean(uri))}
-                value={memoryContext}
-                onChange={setMemoryContext}
-                onBack={() => setContextStepVisible(false)}
-                onSubmit={handleStartProcess}
-                isProcessing={isProcessing}
-                statusMessage={statusMessage}
-                isReanalysis={activeEditingMemory !== null}
-            />
+            {mobile ? (
+                <MemoryContextStepModal
+                    visible={contextStepVisible}
+                    imageUrls={selectedImages.map((image) => image.uri).filter((uri): uri is string => Boolean(uri))}
+                    value={memoryContext}
+                    onChange={setMemoryContext}
+                    onBack={() => setContextStepVisible(false)}
+                    onSubmit={handleStartProcess}
+                    isProcessing={isProcessing}
+                    statusMessage={statusMessage}
+                    isReanalysis={activeEditingMemory !== null}
+                />
+            ) : null}
 
             {/* 인터뷰 모달 */}
             {interviewData && (
@@ -904,6 +939,9 @@ const styles = StyleSheet.create({
     },
     uploadWorkspaceNarrow: { flexDirection: 'column' },
     uploadColumn: { width: '100%' },
+    webUploadColumn: { width: 0, flex: 0.9, minWidth: 0 },
+    webContextColumn: { width: 0, flex: 1.1, minWidth: 0 },
+    webContextColumnNarrow: { width: '100%', flex: 0 },
     fullWidthColumn: { width: '100%' },
     cardHeaderRow: { marginBottom: 16 },
     cardTitle: {
