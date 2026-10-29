@@ -262,7 +262,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     ): Promise<MemoryItem | null> => {
         try {
             let id = `album_${Date.now()}`;
-            let rawAnalysis: any = {};
+            let rawPayload: any = {};
             let imageAssets: any[] = [];
             let audioAsset: any = null;
             let categoryFolder = '미분류';
@@ -286,7 +286,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                         'analysis' in arg ||
                         'mode' in arg
                     ) {
-                        rawAnalysis = arg.analysis || arg;
+                        rawPayload = arg;
                         if (arg.images && Array.isArray(arg.images)) imageAssets = arg.images;
                         if (arg.audio) audioAsset = arg.audio;
                         if (arg.categoryFolder) categoryFolder = arg.categoryFolder;
@@ -297,9 +297,9 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 }
             }
 
-            const targetAnalysis = Array.isArray(rawAnalysis)
-                ? rawAnalysis[0]
-                : rawAnalysis?.analysis || rawAnalysis || {};
+            const targetAnalysis = Array.isArray(rawPayload)
+                ? rawPayload[0]
+                : rawPayload?.analysis || rawPayload || {};
 
             const analysis: AnalysisData = {
                 title: targetAnalysis.title || '추억의 순간',
@@ -310,15 +310,25 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 audioTranscriptSummary: targetAnalysis.audioTranscriptSummary || '',
             };
 
-            const finalMode = rawAnalysis.mode || currentMode;
+            const payloadMode =
+                rawPayload.mode === 'travel' || rawPayload.mode === 'childhood'
+                    ? rawPayload.mode
+                    : targetAnalysis.mode === 'travel' || targetAnalysis.mode === 'childhood'
+                      ? targetAnalysis.mode
+                      : rawPayload.rootCategory === '여행'
+                        ? 'travel'
+                        : rawPayload.rootCategory === '유년시절'
+                          ? 'childhood'
+                          : undefined;
+            const finalMode = payloadMode || currentMode;
             const finalRoot = finalMode === 'childhood' ? '유년시절' : '여행';
 
             const payloadAnalysis = {
                 analysis,
                 mode: finalMode,
                 rootCategory: finalRoot,
-                curatedNote: rawAnalysis.curatedNote,
-                interviewData: rawAnalysis.interviewData,
+                curatedNote: rawPayload.curatedNote ?? targetAnalysis.curatedNote,
+                interviewData: rawPayload.interviewData ?? targetAnalysis.interviewData,
             };
 
             const formData = new FormData();
