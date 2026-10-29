@@ -65,7 +65,7 @@ export function MobileScreenHeader({
 const styles = StyleSheet.create({
     wrapper: {
         paddingHorizontal: 16,
-        paddingTop: 2,
+        paddingTop: 8,
         paddingBottom: 12,
         gap: 8,
         backgroundColor: memoryColors.canvas,
