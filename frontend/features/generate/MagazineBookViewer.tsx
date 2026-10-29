@@ -49,8 +49,8 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
             <View style={[styles.previewCard, mobile && styles.previewCardMobile]}>
                 <View style={[styles.previewHeader, mobile && styles.previewHeaderMobile]}>
                     <View style={styles.titleCopy}>
-                        <Text style={styles.bookMainTitle}>{previewTitle}</Text>
-                        <Text style={styles.bookSubtitle}>
+                        <Text style={[styles.bookMainTitle, mobile && styles.bookMainTitleMobile]}>{previewTitle}</Text>
+                        <Text style={[styles.bookSubtitle, mobile && styles.bookSubtitleMobile]}>
                             {generatedNote?.subtitle || '사진과 인터뷰 답변으로 완성한 소중한 기록'}
                         </Text>
                     </View>
@@ -77,14 +77,20 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
                             </Text>
                         </View>
 
-                        <View style={styles.photoControls}>
-                            <TouchableOpacity style={styles.photoNavButton} onPress={() => movePhoto(-1)}>
+                        <View style={[styles.photoControls, mobile && styles.photoControlsMobile]}>
+                            <TouchableOpacity
+                                style={[styles.photoNavButton, mobile && styles.photoNavButtonMobile]}
+                                onPress={() => movePhoto(-1)}
+                            >
                                 <Text style={styles.photoNavText}>← 이전</Text>
                             </TouchableOpacity>
                             <Text
                                 style={styles.photoCountText}
                             >{`${photoCount > 0 ? activePhotoIdx + 1 : 0} / ${photoCount}`}</Text>
-                            <TouchableOpacity style={styles.photoNavButton} onPress={() => movePhoto(1)}>
+                            <TouchableOpacity
+                                style={[styles.photoNavButton, mobile && styles.photoNavButtonMobile]}
+                                onPress={() => movePhoto(1)}
+                            >
                                 <Text style={styles.photoNavText}>다음 →</Text>
                             </TouchableOpacity>
                         </View>
@@ -105,8 +111,10 @@ export const MagazineBookViewer: React.FC<MagazineBookViewerProps> = ({
                     </View>
 
                     <View style={[styles.storyColumn, mobile && styles.contentColumnMobile]}>
-                        <Text style={styles.storyHeading}>함께여서 기억나는 날</Text>
-                        <Text style={styles.storyContent}>{previewStory}</Text>
+                        <Text style={[styles.storyHeading, mobile && styles.storyHeadingMobile]}>
+                            함께여서 기억나는 날
+                        </Text>
+                        <Text style={[styles.storyContent, mobile && styles.storyContentMobile]}>{previewStory}</Text>
                         <View style={styles.metaList}>
                             <Text style={styles.metaText}>{`장소 · ${note.analysis?.location || '장소 미정'}`}</Text>
                             <Text
@@ -175,7 +183,13 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         gap: 24,
     },
-    workspaceMobile: { flexDirection: 'column', flexWrap: 'nowrap', gap: 12 },
+    workspaceMobile: {
+        flexDirection: 'column',
+        flexWrap: 'nowrap',
+        alignItems: 'stretch',
+        gap: 12,
+        maxWidth: '100%',
+    },
     previewCard: {
         flexGrow: 1,
         flexBasis: 720,
@@ -186,7 +200,16 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 24,
     },
-    previewCardMobile: { flexBasis: 'auto', minWidth: 0, padding: 16, borderWidth: 0, borderRadius: 20 },
+    previewCardMobile: {
+        width: '100%',
+        maxWidth: '100%',
+        flexBasis: 'auto',
+        flexGrow: 0,
+        minWidth: 0,
+        padding: 16,
+        borderWidth: 0,
+        borderRadius: 20,
+    },
     previewHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -203,6 +226,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontFamily: memoryFontFamily,
     },
+    bookMainTitleMobile: { fontSize: 22, lineHeight: 31 },
     bookSubtitle: {
         color: memoryColors.textMuted,
         fontSize: 14,
@@ -210,6 +234,7 @@ const styles = StyleSheet.create({
         marginTop: 6,
         fontFamily: memoryFontFamily,
     },
+    bookSubtitleMobile: { fontSize: 13, lineHeight: 21, marginTop: 4 },
     styleBadge: {
         color: memoryColors.brand,
         backgroundColor: memoryColors.brandLight,
@@ -260,6 +285,7 @@ const styles = StyleSheet.create({
         gap: 10,
         marginTop: 16,
     },
+    photoControlsMobile: { width: '100%', gap: 8, marginTop: 12 },
     photoNavButton: {
         minWidth: 100,
         paddingVertical: 10,
@@ -270,6 +296,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: memoryColors.surface,
     },
+    photoNavButtonMobile: { minWidth: 0, flex: 1, paddingHorizontal: 8 },
     photoNavText: {
         color: memoryColors.textSecondary,
         fontSize: 12,
@@ -298,11 +325,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         marginBottom: 12,
     },
+    storyHeadingMobile: { fontSize: 18, lineHeight: 27, marginBottom: 8 },
     storyContent: {
         color: memoryColors.textSecondary,
         fontSize: 14,
         lineHeight: 25,
     },
+    storyContentMobile: { fontSize: 13, lineHeight: 23 },
     metaList: {
         borderTopWidth: 1,
         borderTopColor: memoryColors.border,
