@@ -643,11 +643,23 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
                             style={[
                                 styles.storageTypeTabTitle,
                                 activeStorage === 'memory' && styles.storageTypeTabTitleActive,
+                                mobile &&
+                                    activeStorage === 'memory' &&
+                                    styles.storageTypeTabTitleActiveMobile,
                             ]}
                         >
                             🗂️ 기억 보관함
                         </Text>
-                        <Text style={styles.storageTypeTabDescription}>노트 생성 전 · 사진, 인터뷰, 상세 정보</Text>
+                        <Text
+                            style={[
+                                styles.storageTypeTabDescription,
+                                mobile &&
+                                    activeStorage === 'memory' &&
+                                    styles.storageTypeTabDescriptionActiveMobile,
+                            ]}
+                        >
+                            노트 생성 전 · 사진, 인터뷰, 상세 정보
+                        </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[
@@ -662,11 +674,21 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
                             style={[
                                 styles.storageTypeTabTitle,
                                 activeStorage === 'note' && styles.storageTypeTabTitleActive,
+                                mobile && activeStorage === 'note' && styles.storageTypeTabTitleActiveMobile,
                             ]}
                         >
                             📚 추억 보관함
                         </Text>
-                        <Text style={styles.storageTypeTabDescription}>노트 생성 후 · 완성된 이야기와 사진</Text>
+                        <Text
+                            style={[
+                                styles.storageTypeTabDescription,
+                                mobile &&
+                                    activeStorage === 'note' &&
+                                    styles.storageTypeTabDescriptionActiveMobile,
+                            ]}
+                        >
+                            노트 생성 후 · 완성된 이야기와 사진
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
@@ -1464,19 +1486,21 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.brand,
         backgroundColor: memoryColors.brandLight,
     },
-    storageTypeTabActiveMobile: { backgroundColor: memoryColors.brandTint },
+    storageTypeTabActiveMobile: { backgroundColor: memoryColors.brand },
     storageTypeTabTitle: {
         color: memoryColors.textSecondary,
         fontSize: 15,
         fontWeight: '700',
     },
     storageTypeTabTitleActive: { color: memoryColors.brand },
+    storageTypeTabTitleActiveMobile: { color: memoryColors.surface },
     storageTypeTabDescription: {
         color: memoryColors.textMuted,
         fontSize: 12,
         lineHeight: 19,
         marginTop: 4,
     },
+    storageTypeTabDescriptionActiveMobile: { color: '#E0F2FE' },
     backupWorkspace: { flex: 1, minHeight: 0, flexDirection: 'row', gap: 24 },
     backupWorkspaceNarrow: { flexDirection: 'column' },
     folderSidebar: {

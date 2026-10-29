@@ -145,9 +145,19 @@ export default function EnhanceScreen({ mobile = false }: { mobile?: boolean }) 
             <TouchableOpacity
                 style={[styles.modeTabBtn, mobile && styles.modeTabBtnMobile, activeMode === 'enhance' && styles.modeTabBtnActive]}
                 onPress={() => setActiveMode('enhance')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeMode === 'enhance' }}
             >
-                <Text style={[styles.modeTabBtnText, activeMode === 'enhance' && styles.modeTabBtnTextActive]}>
-                    {mobile ? '초고화질 개선' : '⚡ 초고화질 개선 (Super Resolution)'}
+                <Text
+                    style={[
+                        styles.modeTabBtnText,
+                        mobile && styles.modeTabBtnTextMobile,
+                        activeMode === 'enhance' && styles.modeTabBtnTextActive,
+                    ]}
+                >
+                    {mobile
+                        ? `${activeMode === 'enhance' ? '✓ ' : ''}초고화질 개선`
+                        : '⚡ 초고화질 개선 (Super Resolution)'}
                 </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -157,14 +167,19 @@ export default function EnhanceScreen({ mobile = false }: { mobile?: boolean }) 
                     activeMode === 'colorize' && styles.modeTabBtnActiveColorize,
                 ]}
                 onPress={() => setActiveMode('colorize')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeMode === 'colorize' }}
             >
                 <Text
                     style={[
                         styles.modeTabBtnText,
+                        mobile && styles.modeTabBtnTextMobile,
                         activeMode === 'colorize' && styles.modeTabBtnTextActiveColorize,
                     ]}
                 >
-                    {mobile ? '흑백 컬러 복원' : '🎨 흑백 사진 컬러 복원 (Colorize)'}
+                    {mobile
+                        ? `${activeMode === 'colorize' ? '✓ ' : ''}흑백 컬러 복원`
+                        : '🎨 흑백 사진 컬러 복원 (Colorize)'}
                 </Text>
             </TouchableOpacity>
         </View>
@@ -404,7 +419,7 @@ const styles = StyleSheet.create({
         maxWidth: '100%',
         marginTop: 16,
     },
-    modeTabContainerMobile: { width: '100%', marginTop: 0, gap: 7 },
+    modeTabContainerMobile: { width: '100%', marginTop: 0, gap: 8 },
     modeTabBtn: {
         flex: 1,
         paddingVertical: 12,
@@ -416,12 +431,18 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.border,
     },
     modeTabBtnMobile: {
-        flexGrow: 0,
-        flexShrink: 1,
+        flex: 1,
+        flexBasis: 0,
+        flexGrow: 1,
+        flexShrink: 0,
+        minWidth: 0,
+        minHeight: 46,
+        justifyContent: 'center',
         paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 999,
-        borderWidth: 0,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: memoryColors.border,
         backgroundColor: memoryColors.subtle,
     },
     modeTabBtnActive: {
@@ -437,6 +458,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: memoryColors.textSecondary,
     },
+    modeTabBtnTextMobile: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
     modeTabBtnTextActive: { color: memoryColors.surface },
     modeTabBtnTextActiveColorize: { color: memoryColors.surface },
     mainCard: {
