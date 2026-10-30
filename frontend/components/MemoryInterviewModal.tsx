@@ -128,7 +128,10 @@ export function MemoryInterviewModal({
                     category: question.category,
                     targetClue: question.targetClue,
                     targetPhotoIndexes,
-                    targetImageUrls: targetPhotoIndexes.map((photoIndex) => imageUrls[photoIndex - 1]),
+                    // 사진 데이터 자체는 별도 파일로 저장됩니다. 웹의 imageUrls에는
+                    // Base64 Data URL이 들어올 수 있으므로 인터뷰 메타데이터에는
+                    // 사진 번호만 남겨 중복 전송과 Gemini 토큰 폭증을 막습니다.
+                    targetImageUrls: [],
                     question: question.question,
                     answer: answers[question.id]?.trim() || '기억 안 남',
                 };
