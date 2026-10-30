@@ -11,6 +11,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,8 +24,6 @@ import {
 import {
     hasMeaningfulMemoryContext,
     MemoryContextData,
-    MEMORY_OWNER_LABELS,
-    MEMORY_PURPOSE_LABELS,
 } from '../types/memoryContext';
 import { memoryColors, memoryFontFamily } from '../constants/memoryTheme';
 import { WebMemoryInterviewPanel } from './web/WebMemoryInterviewPanel';
@@ -74,8 +73,9 @@ export function MemoryInterviewModal({
     initialExtraStory = '',
     onComplete,
 }: MemoryInterviewModalProps) {
+    const { width } = useWindowDimensions();
     const insets = useSafeAreaInsets();
-    const isCompact = Platform.OS !== 'web';
+    const isCompact = Platform.OS !== 'web' || width < 920;
     const modalTopPadding = Platform.OS === 'ios' ? Math.max(insets.top + 12, 56) : undefined;
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [extraStory, setExtraStory] = useState<string>('');
@@ -128,7 +128,10 @@ export function MemoryInterviewModal({
                     category: question.category,
                     targetClue: question.targetClue,
                     targetPhotoIndexes,
-                    targetImageUrls: targetPhotoIndexes.map((photoIndex) => imageUrls[photoIndex - 1]),
+                    // 사진 데이터 자체는 별도 파일로 저장됩니다. 웹의 imageUrls에는
+                    // Base64 Data URL이 들어올 수 있으므로 인터뷰 메타데이터에는
+                    // 사진 번호만 남겨 중복 전송과 Gemini 토큰 폭증을 막습니다.
+                    targetImageUrls: [],
                     question: question.question,
                     answer: answers[question.id]?.trim() || '기억 안 남',
                 };
@@ -580,7 +583,7 @@ export function MemoryInterviewModal({
                                             </TouchableOpacity>
                                         </View>
                                     </View>
-                                ) : Platform.OS === 'web' ? (
+                                ) : (
                                     <WebMemoryInterviewPanel
                                         questions={questions}
                                         imageUrls={imageUrls}
@@ -608,246 +611,6 @@ export function MemoryInterviewModal({
                                             else moveCompactInterview(1);
                                         }}
                                     />
-                                ) : (
-                                    <>
-                                <ScrollView
-                                    style={styles.body}
-                                    contentContainerStyle={styles.bodyContent}
-                                    showsVerticalScrollIndicator={false}
-                                >
-                                    {hasMeaningfulMemoryContext(factsAndClues.memoryContext) && (
-                                        <View style={styles.contextBlock}>
-                                            <Text style={styles.contextTitle}>먼저 제공한 기억의 단서</Text>
-                                            <Text style={styles.contextGuide}>
-                                                아래 내용은 AI가 사진을 해석하고 질문할 때 우선 참고한 정보입니다.
-                                            </Text>
-                                            <View style={styles.contextRows}>
-                                                {factsAndClues.memoryContext?.memoryOwner && (
-                                                    <Text style={styles.contextRowText}>
-                                                        <Text style={styles.contextRowLabel}>기억 주인 · </Text>
-                                                        {MEMORY_OWNER_LABELS[factsAndClues.memoryContext.memoryOwner]}
-                                                    </Text>
-                                                )}
-                                                {factsAndClues.memoryContext?.purpose && (
-                                                    <Text style={styles.contextRowText}>
-                                                        <Text style={styles.contextRowLabel}>기록 목적 · </Text>
-                                                        {MEMORY_PURPOSE_LABELS[factsAndClues.memoryContext.purpose]}
-                                                    </Text>
-                                                )}
-                                                {factsAndClues.memoryContext?.approximateTime ? (
-                                                    <Text style={styles.contextRowText}>
-                                                        <Text style={styles.contextRowLabel}>시기 · </Text>
-                                                        {factsAndClues.memoryContext.approximateTime}
-                                                    </Text>
-                                                ) : null}
-                                                {factsAndClues.memoryContext?.placeHint ? (
-                                                    <Text style={styles.contextRowText}>
-                                                        <Text style={styles.contextRowLabel}>장소 · </Text>
-                                                        {factsAndClues.memoryContext.placeHint}
-                                                    </Text>
-                                                ) : null}
-                                                {factsAndClues.memoryContext?.peopleHint ? (
-                                                    <Text style={styles.contextRowText}>
-                                                        <Text style={styles.contextRowLabel}>사람 · </Text>
-                                                        {factsAndClues.memoryContext.peopleHint}
-                                                    </Text>
-                                                ) : null}
-                                                {factsAndClues.memoryContext?.additionalContext ? (
-                                                    <Text style={styles.contextRowText}>
-                                                        <Text style={styles.contextRowLabel}>추가 단서 · </Text>
-                                                        {factsAndClues.memoryContext.additionalContext}
-                                                    </Text>
-                                                ) : null}
-                                            </View>
-                                        </View>
-                                    )}
-
-                                    {questions.length === 0 && (
-                                        <View style={styles.emptyBlock}>
-                                            <Text style={styles.emptyText}>
-                                                생성된 질문이 없습니다. 잠시 후 다시 시도해주세요.
-                                            </Text>
-                                        </View>
-                                    )}
-
-                                    {questions.map((question, questionIndex) => {
-                                        const currentAnswer = answers[question.id] || '';
-                                        const targetPhotoIndexes = getValidPhotoIndexes(question, imageUrls);
-                                        const photoLabel = targetPhotoIndexes
-                                            .map((photoIndex) => '사진 ' + photoIndex)
-                                            .join(', ');
-
-                                        return (
-                                            <View
-                                                key={question.id || String(questionIndex)}
-                                                style={styles.questionBlock}
-                                            >
-                                                <View style={styles.badgeRow}>
-                                                    <View style={styles.categoryBadge}>
-                                                        <Text style={styles.categoryBadgeText}>
-                                                            {question.category || '기억의 단서'}
-                                                        </Text>
-                                                    </View>
-                                                    {targetPhotoIndexes.length > 0 && (
-                                                        <View style={styles.photoBadge}>
-                                                            <Text style={styles.photoBadgeText}>📷 {photoLabel}</Text>
-                                                        </View>
-                                                    )}
-                                                </View>
-
-                                                {question.targetClue ? (
-                                                    <Text style={styles.targetClueText}>
-                                                        살펴볼 단서 · {question.targetClue}
-                                                    </Text>
-                                                ) : null}
-
-                                                {targetPhotoIndexes.length > 0 && (
-                                                    <View style={styles.photoSection}>
-                                                        <Text style={styles.photoGuideText}>
-                                                            사진을 누르면 크게 볼 수 있어요
-                                                        </Text>
-                                                        <ScrollView
-                                                            horizontal
-                                                            showsHorizontalScrollIndicator={false}
-                                                            contentContainerStyle={styles.photoStrip}
-                                                        >
-                                                            {targetPhotoIndexes.map((photoIndex) => {
-                                                                const imageUrl = imageUrls[photoIndex - 1];
-
-                                                                return (
-                                                                    <TouchableOpacity
-                                                                        key={photoIndex}
-                                                                        style={styles.thumbnailButton}
-                                                                        activeOpacity={0.82}
-                                                                        onPress={() =>
-                                                                            setPreviewImage({
-                                                                                url: imageUrl,
-                                                                                photoNumber: photoIndex,
-                                                                            })
-                                                                        }
-                                                                        disabled={isSubmitting}
-                                                                        accessibilityRole="button"
-                                                                        accessibilityLabel={
-                                                                            '사진 ' + photoIndex + ' 크게 보기'
-                                                                        }
-                                                                    >
-                                                                        <Image
-                                                                            source={{ uri: imageUrl }}
-                                                                            style={styles.thumbnail}
-                                                                            resizeMode="cover"
-                                                                        />
-                                                                        <View style={styles.thumbnailNumber}>
-                                                                            <Text style={styles.thumbnailNumberText}>
-                                                                                {photoIndex}
-                                                                            </Text>
-                                                                        </View>
-                                                                    </TouchableOpacity>
-                                                                );
-                                                            })}
-                                                        </ScrollView>
-                                                    </View>
-                                                )}
-
-                                                <Text style={styles.questionText}>
-                                                    {questionIndex + 1}. {question.question}
-                                                </Text>
-
-                                                {question.quickOptions && question.quickOptions.length > 0 && (
-                                                    <View style={styles.optionsRow}>
-                                                        {question.quickOptions.map((option, optionIndex) => {
-                                                            const isSelected = currentAnswer === option;
-
-                                                            return (
-                                                                <TouchableOpacity
-                                                                    key={option + String(optionIndex)}
-                                                                    style={[
-                                                                        styles.optionChip,
-                                                                        isSelected && styles.optionChipActive,
-                                                                    ]}
-                                                                    onPress={() =>
-                                                                        handleOptionSelect(question.id, option)
-                                                                    }
-                                                                    disabled={isSubmitting}
-                                                                >
-                                                                    <Text
-                                                                        style={[
-                                                                            styles.optionChipText,
-                                                                            isSelected && styles.optionChipTextActive,
-                                                                        ]}
-                                                                    >
-                                                                        {option}
-                                                                    </Text>
-                                                                </TouchableOpacity>
-                                                            );
-                                                        })}
-                                                    </View>
-                                                )}
-
-                                                <TextInput
-                                                    style={styles.input}
-                                                    placeholder="사진을 보며 떠오른 기억을 직접 적어주세요."
-                                                    placeholderTextColor="#94A3B8"
-                                                    value={currentAnswer}
-                                                    onChangeText={(text) => handleTextChange(question.id, text)}
-                                                    editable={!isSubmitting}
-                                                />
-                                            </View>
-                                        );
-                                    })}
-
-                                    <View style={styles.questionBlock}>
-                                        <View style={styles.freeRecallBadge}>
-                                            <Text style={styles.freeRecallBadgeText}>자유 회상</Text>
-                                        </View>
-                                        <Text style={styles.questionText}>
-                                            {questions.length + 1}. 그 외에 떠오르는 사연이나 꼭 남기고 싶은 이야기가
-                                            있다면 자유롭게 적어주세요.
-                                        </Text>
-                                        <TextInput
-                                            style={[styles.input, styles.multilineInput]}
-                                            placeholder="예: 이 사진을 찍고 나서 가족과 함께 식사했던 기억이 나요."
-                                            placeholderTextColor="#94A3B8"
-                                            value={extraStory}
-                                            onChangeText={setExtraStory}
-                                            multiline
-                                            editable={!isSubmitting}
-                                        />
-                                    </View>
-                                </ScrollView>
-
-                                <View style={styles.footer}>
-                                    {isSubmitting && (
-                                        <View style={styles.statusRow}>
-                                            <ActivityIndicator size="small" color="#0284C7" />
-                                            <Text style={styles.statusText}>{statusText}</Text>
-                                        </View>
-                                    )}
-
-                                    <View style={styles.buttonRow}>
-                                        <TouchableOpacity
-                                            style={styles.cancelButton}
-                                            onPress={onClose}
-                                            disabled={isSubmitting}
-                                        >
-                                            <Text style={styles.cancelButtonText}>취소</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-                                            onPress={handleSubmit}
-                                            disabled={isSubmitting || questions.length === 0}
-                                        >
-                                            {isSubmitting ? (
-                                                <View style={styles.loadingInner}>
-                                                    <ActivityIndicator size="small" color="#FFFFFF" />
-                                                    <Text style={styles.submitButtonText}>노트 작성 중...</Text>
-                                                </View>
-                                            ) : (
-                                                <Text style={styles.submitButtonText}>답변으로 추억 완성하기</Text>
-                                            )}
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                                    </>
                                 )}
                             </View>
                         </View>

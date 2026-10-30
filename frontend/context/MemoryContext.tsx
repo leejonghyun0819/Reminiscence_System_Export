@@ -191,6 +191,33 @@ async function assetToBlob(asset: any, defaultName: string): Promise<{ blob: Blo
     return { blob: new Blob([''], { type: 'image/jpeg' }), name: defaultName };
 }
 
+function compactInterviewDataForStorage(interviewData: any): any {
+    if (!interviewData || typeof interviewData !== 'object') {
+        return interviewData;
+    }
+
+    const questions = Array.isArray(interviewData.questions)
+        ? interviewData.questions.map((question: any) => {
+              if (!question || typeof question !== 'object') {
+                  return question;
+              }
+
+              // 신규 웹 업로드의 targetImageUrls에는 사진 전체를 담은 Data URL이
+              // 들어갈 수 있습니다. 실제 사진은 imageFiles로 따로 저장하므로
+              // 메타데이터에는 targetPhotoIndexes만 보관하면 충분합니다.
+              return {
+                  ...question,
+                  targetImageUrls: [],
+              };
+          })
+        : interviewData.questions;
+
+    return {
+        ...interviewData,
+        questions,
+    };
+}
+
 export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [memoryList, setMemoryList] = useState<MemoryItem[]>([]);
     const [selectedEnhanceMemory, setSelectedEnhanceMemory] = useState<MemoryItem | null>(null);
@@ -322,13 +349,14 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                           : undefined;
             const finalMode = payloadMode || currentMode;
             const finalRoot = finalMode === 'childhood' ? '유년시절' : '여행';
+            const rawInterviewData = rawPayload.interviewData ?? targetAnalysis.interviewData;
 
             const payloadAnalysis = {
                 analysis,
                 mode: finalMode,
                 rootCategory: finalRoot,
                 curatedNote: rawPayload.curatedNote ?? targetAnalysis.curatedNote,
-                interviewData: rawPayload.interviewData ?? targetAnalysis.interviewData,
+                interviewData: compactInterviewDataForStorage(rawInterviewData),
             };
 
             const formData = new FormData();
