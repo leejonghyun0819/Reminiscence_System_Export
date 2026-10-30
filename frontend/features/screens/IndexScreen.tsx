@@ -472,7 +472,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                     <MemoryPageHeader
                         title="사진 속 순간에, 나의 기억을 더하세요"
                         subtitle={
-                            mobile
+                            isNarrow
                                 ? '사진을 먼저 등록하세요. 다음 화면에서 기억 단서를 입력하면 AI가 사진별 인터뷰를 만듭니다.'
                                 : '사진과 기억 단서를 한 화면에서 함께 입력하면 AI가 사진별 인터뷰를 만듭니다.'
                         }
@@ -503,7 +503,10 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                     <View style={styles.reanalysisNotice}>
                                         <Text style={styles.reanalysisNoticeTitle}>기존 앨범 사진을 불러왔습니다</Text>
                                         <Text style={styles.reanalysisNoticeText}>
-                                            다음 화면에서 기억 단서를 고친 뒤 다시 분석하세요. 완료하면 새 앨범을 만들지 않고 기존 앨범을 대체합니다.
+                                            {isNarrow
+                                                ? '다음 화면에서 기억 단서를 고친 뒤 다시 분석하세요.'
+                                                : '오른쪽 기억 단서를 고친 뒤 다시 분석하세요.'}{' '}
+                                            완료하면 새 앨범을 만들지 않고 기존 앨범을 대체합니다.
                                         </Text>
                                     </View>
                                 ) : null}
@@ -615,7 +618,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                                     </>
                                 )}
 
-                                {mobile ? (
+                                {isNarrow ? (
                                     <View style={styles.uploadActionArea}>
                                         <TouchableOpacity
                                             style={[
@@ -648,7 +651,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                             </DroppableAlbumCard>
                         </View>
 
-                        {!mobile ? (
+                        {!isNarrow ? (
                             <View
                                 style={[
                                     styles.webContextColumn,
@@ -864,7 +867,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 </View>
             </ScrollView>
 
-            {mobile ? (
+            {isNarrow ? (
                 <MemoryContextStepModal
                     visible={contextStepVisible}
                     imageUrls={selectedImages.map((image) => image.uri).filter((uri): uri is string => Boolean(uri))}

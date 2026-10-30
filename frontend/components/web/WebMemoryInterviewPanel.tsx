@@ -7,7 +7,6 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    useWindowDimensions,
     View,
 } from 'react-native';
 
@@ -63,8 +62,6 @@ export function WebMemoryInterviewPanel({
     onPrevious,
     onNext,
 }: WebMemoryInterviewPanelProps) {
-    const { width } = useWindowDimensions();
-    const stacked = width < 960;
     const totalSteps = Math.max(questions.length + 1, 1);
     const isExtraStoryStep = currentStep >= questions.length;
     const question = isExtraStoryStep ? null : questions[currentStep] || null;
@@ -103,8 +100,8 @@ export function WebMemoryInterviewPanel({
                 <View style={[styles.progressFill, { width: progress }]} />
             </View>
 
-            <View style={[styles.stage, stacked && styles.stageStacked]}>
-                <View style={[styles.photoColumn, stacked && styles.photoColumnStacked]}>
+            <View style={styles.stage}>
+                <View style={styles.photoColumn}>
                     <View style={styles.photoHeader}>
                         <View>
                             <Text style={styles.photoTitle}>질문과 연결된 사진</Text>
@@ -123,7 +120,7 @@ export function WebMemoryInterviewPanel({
                     </View>
 
                     <TouchableOpacity
-                        style={[styles.mainPhotoButton, stacked && styles.mainPhotoButtonStacked]}
+                        style={styles.mainPhotoButton}
                         onPress={() => activeImageUrl && onPreviewPhoto(activePhotoIndex)}
                         activeOpacity={activeImageUrl ? 0.9 : 1}
                         disabled={!activeImageUrl}
@@ -173,13 +170,8 @@ export function WebMemoryInterviewPanel({
                     ) : null}
                 </View>
 
-                <View style={[styles.questionColumn, stacked && styles.questionColumnStacked]}>
-                    <ScrollView
-                        style={styles.questionScroll}
-                        contentContainerStyle={styles.questionContent}
-                        showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                    >
+                <View style={styles.questionColumn}>
+                    <View style={styles.questionContent}>
                         {questions.length === 0 ? (
                             <View style={styles.emptyBox}>
                                 <Text style={styles.emptyText}>생성된 질문이 없습니다. 잠시 후 다시 시도해주세요.</Text>
@@ -270,7 +262,7 @@ export function WebMemoryInterviewPanel({
                                 />
                             </>
                         ) : null}
-                    </ScrollView>
+                    </View>
 
                     {isSubmitting ? (
                         <View style={styles.statusRow}>
@@ -359,7 +351,6 @@ const styles = StyleSheet.create({
     },
     progressFill: { height: '100%', borderRadius: 999, backgroundColor: memoryColors.brand },
     stage: { flex: 1, minHeight: 0, flexDirection: 'row', alignItems: 'stretch', gap: 20 },
-    stageStacked: { flexDirection: 'column' },
     photoColumn: {
         flex: 1.08,
         minWidth: 0,
@@ -369,7 +360,6 @@ const styles = StyleSheet.create({
         borderColor: memoryColors.border,
         backgroundColor: memoryColors.surface,
     },
-    photoColumnStacked: { flex: 0, minHeight: 300 },
     photoHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -413,7 +403,6 @@ const styles = StyleSheet.create({
         position: 'relative',
         backgroundColor: '#0F172A',
     },
-    mainPhotoButtonStacked: { flex: 0, height: 260 },
     mainPhoto: { width: '100%', height: '100%' },
     mainPhotoBadge: {
         position: 'absolute',
@@ -455,16 +444,14 @@ const styles = StyleSheet.create({
     questionColumn: {
         flex: 0.92,
         minWidth: 0,
-        padding: 24,
+        padding: 18,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: memoryColors.border,
         backgroundColor: memoryColors.surface,
     },
-    questionColumnStacked: { flex: 1, minHeight: 390 },
-    questionScroll: { flex: 1, minHeight: 0 },
-    questionContent: { flexGrow: 1, justifyContent: 'center', paddingBottom: 4 },
-    badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+    questionContent: { flex: 1, minHeight: 0, justifyContent: 'center', paddingBottom: 4 },
+    badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
     categoryBadge: {
         paddingHorizontal: 11,
         paddingVertical: 6,
@@ -489,8 +476,8 @@ const styles = StyleSheet.create({
     },
     freeRecallBadgeText: { color: '#B45309', fontSize: 12, fontWeight: '800' },
     clueBox: {
-        marginBottom: 18,
-        padding: 13,
+        marginBottom: 12,
+        padding: 10,
         borderRadius: 10,
         borderWidth: 1,
         borderColor: memoryColors.brandBorder,
@@ -505,11 +492,11 @@ const styles = StyleSheet.create({
     },
     questionText: {
         color: memoryColors.text,
-        fontSize: 22,
-        lineHeight: 34,
+        fontSize: 19,
+        lineHeight: 29,
         fontWeight: '800',
         fontFamily: memoryFontFamily,
-        marginBottom: 12,
+        marginBottom: 10,
     },
     questionGuide: {
         color: memoryColors.textMuted,
@@ -518,10 +505,10 @@ const styles = StyleSheet.create({
         marginBottom: 18,
         fontFamily: memoryFontFamily,
     },
-    optionList: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginBottom: 18 },
+    optionList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
     optionButton: {
-        minHeight: 42,
-        paddingHorizontal: 15,
+        minHeight: 38,
+        paddingHorizontal: 13,
         borderRadius: 999,
         borderWidth: 1,
         borderColor: memoryColors.border,
@@ -532,7 +519,7 @@ const styles = StyleSheet.create({
     optionButtonSelected: { borderColor: memoryColors.brand, backgroundColor: memoryColors.brandLight },
     optionButtonText: {
         color: memoryColors.textSecondary,
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '600',
         fontFamily: memoryFontFamily,
     },
@@ -545,20 +532,20 @@ const styles = StyleSheet.create({
         fontFamily: memoryFontFamily,
     },
     answerInput: {
-        minHeight: 124,
-        paddingHorizontal: 15,
-        paddingVertical: 13,
+        minHeight: 92,
+        paddingHorizontal: 13,
+        paddingVertical: 11,
         borderRadius: 10,
         borderWidth: 1,
         borderColor: memoryColors.borderStrong,
         color: memoryColors.text,
         backgroundColor: memoryColors.surface,
-        fontSize: 16,
-        lineHeight: 25,
+        fontSize: 15,
+        lineHeight: 22,
         fontFamily: memoryFontFamily,
         outlineStyle: 'none' as any,
     },
-    answerInputLarge: { minHeight: 180 },
+    answerInputLarge: { minHeight: 140 },
     emptyBox: {
         padding: 20,
         borderRadius: 12,
@@ -578,10 +565,10 @@ const styles = StyleSheet.create({
         backgroundColor: memoryColors.brandLight,
     },
     statusText: { color: memoryColors.brandDark, fontSize: 13, fontWeight: '700' },
-    navigation: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 16 },
+    navigation: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 12 },
     previousButton: {
         minWidth: 126,
-        minHeight: 50,
+        minHeight: 46,
         paddingHorizontal: 16,
         borderRadius: 9,
         borderWidth: 1,
@@ -597,7 +584,7 @@ const styles = StyleSheet.create({
         fontFamily: memoryFontFamily,
     },
     nextButton: {
-        minHeight: 50,
+        minHeight: 46,
         flex: 1,
         paddingHorizontal: 18,
         borderRadius: 9,
