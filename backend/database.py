@@ -64,5 +64,22 @@ def init_db():
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS memory_shares (
+                share_id TEXT PRIMARY KEY,
+                memory_id TEXT NOT NULL,
+                snapshot_json TEXT NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                expires_at TIMESTAMP,
+                password_hash TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_memory_shares_memory_id ON memory_shares(memory_id)"
+        )
+
 # 모듈 로드 시 최초 1회 실행 보장
 init_db()
+

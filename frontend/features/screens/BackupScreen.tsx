@@ -14,7 +14,7 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMemory, AnalysisVersion } from '../../context/MemoryContext';
+import { useMemory, AnalysisVersion, MemoryItem } from '../../context/MemoryContext';
 import { MouseDragHorizontalScroll } from '../backup/MouseDragHorizontalScroll';
 import { CreateFolderModal } from '../backup/CreateFolderModal';
 import { MoveFolderModal } from '../MoveFolderModal';
@@ -24,6 +24,7 @@ import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
 import { memoryColors, memoryLayout } from '../../constants/memoryTheme';
 import { API_BASE_URL as BACKEND_URL, resolveBackendMediaUrls } from '../../config/api';
+import { ExportModal } from '../export/ExportModal';
 
 export interface ExtendedBackupAlbumMeta extends BackupAlbumMeta {
     mode?: 'travel' | 'childhood';
@@ -74,6 +75,7 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
 
     // 모달 관리 상태
     const [viewingAlbum, setViewingAlbum] = useState<ExtendedBackupAlbumMeta | null>(null);
+    const [exportNote, setExportNote] = useState<MemoryItem | null>(null);
     const [isFolderModalOpen, setIsFolderModalOpen] = useState<boolean>(false);
     const [movingAlbum, setMovingAlbum] = useState<ExtendedBackupAlbumMeta | null>(null);
     const [isBatchMovingOpen, setIsBatchMovingOpen] = useState<boolean>(false);
@@ -1145,6 +1147,12 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
                                                     <Text style={styles.noteOpenButtonText}>노트 열기</Text>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
+                                                    style={styles.noteExportButton}
+                                                    onPress={() => setExportNote(note)}
+                                                >
+                                                    <Text style={styles.noteExportButtonText}>내보내기</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
                                                     style={styles.deleteSingleBtn}
                                                     onPress={() => handleDeleteGeneratedNote(note.id)}
                                                 >
@@ -1192,6 +1200,13 @@ export default function BackupPage({ onClose, mobile = false }: { onClose?: () =
                     onRestoreToHome={handleRestoreSingle}
                     onRollbackVersion={handleRollbackToHistoryVersion}
                     onDeleteHistoryVersion={handleDeleteHistoryFromBackup}
+                />
+
+                <ExportModal
+                    visible={exportNote !== null}
+                    note={exportNote}
+                    onClose={() => setExportNote(null)}
+                    mobile={mobile}
                 />
 
                 {/* 큰 폴더 이름 변경 모달 */}
@@ -1825,6 +1840,15 @@ const styles = StyleSheet.create({
         backgroundColor: memoryColors.brand,
     },
     noteOpenButtonText: { color: memoryColors.surface, fontSize: 12, fontWeight: '700' },
+    noteExportButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 7,
+        borderWidth: 1,
+        borderColor: '#7dd3fc',
+        backgroundColor: '#ecf8fe',
+    },
+    noteExportButtonText: { color: memoryColors.brand, fontSize: 12, fontWeight: '800' },
     renameFilesBtn: {
         backgroundColor: '#E0F2FE',
         borderWidth: 1,
@@ -2000,4 +2024,5 @@ const styles = StyleSheet.create({
     },
     closeFooterBtnText: { fontSize: 13, fontWeight: '700', color: '#475569' },
 });
+
 

@@ -9,6 +9,7 @@ load_dotenv(ENV_PATH)
 
 ALBUMS_DIR = os.path.join(BASE_DIR, "albums")
 ENHANCED_DIR = os.path.join(ALBUMS_DIR, "enhanced")
+EXPORTS_DIR = os.path.join(BASE_DIR, "exports")
 DB_PATH = os.path.join(BASE_DIR, "database.db")
 
 # Secrets must be supplied through backend/.env or the process environment.
@@ -23,5 +24,12 @@ GEMINI_CLASSIFY_BATCH_SIZE = int(
 )
 GEMINI_DIRECT_THRESHOLD = int(os.getenv("GEMINI_DIRECT_THRESHOLD", "4"))
 
+EXPORT_TTL_SECONDS = int(os.getenv("EXPORT_TTL_SECONDS", "86400"))
+EXPORT_NODE_BINARY = os.getenv("EXPORT_NODE_BINARY", "node")
+EXPORT_FFMPEG_BINARY = os.getenv("EXPORT_FFMPEG_BINARY", "ffmpeg")
+
 os.makedirs(ALBUMS_DIR, exist_ok=True)
 os.makedirs(ENHANCED_DIR, exist_ok=True)
+for export_kind in ("pdf", "cards", "video", "zip", "temp"):
+    os.makedirs(os.path.join(EXPORTS_DIR, export_kind), exist_ok=True)
+

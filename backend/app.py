@@ -5,9 +5,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from routers import gemini, youcam, memories, folders, backup, generated_notes
+from routers import gemini, youcam, memories, folders, backup, generated_notes, export
 
-from config import ALBUMS_DIR, ENHANCED_DIR
+from config import ALBUMS_DIR, ENHANCED_DIR, EXPORTS_DIR
 from database import init_db
 
 # -------------------------------------------------------------
@@ -43,6 +43,7 @@ async def lifespan(app: FastAPI):
     init_db()
     os.makedirs(ALBUMS_DIR, exist_ok=True)
     os.makedirs(ENHANCED_DIR, exist_ok=True)
+    os.makedirs(EXPORTS_DIR, exist_ok=True)
     print("🚀 Reminiscence Note 백엔드 서버가 시작되었습니다.")
     yield
     print("🛑 Reminiscence Note 백엔드 서버가 종료되었습니다.")
@@ -71,6 +72,7 @@ app.include_router(memories.router)
 app.include_router(folders.router)
 app.include_router(backup.router)
 app.include_router(generated_notes.router)
+app.include_router(export.router)
 
 
 
@@ -115,3 +117,4 @@ def root_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+
