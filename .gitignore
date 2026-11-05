@@ -12,6 +12,10 @@ backend/*.db
 
 # Python
 __pycache__/
+.venv/
+backend/export_renderer/node_modules/
+backend/exports/*
+!backend/exports/.gitignore
 *.py[cod]
 
 # Node / Expo
@@ -28,3 +32,4 @@ android/
 # OS / editor artifacts
 .DS_Store
 *.pem
+

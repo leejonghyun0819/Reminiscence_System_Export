@@ -1,0 +1,12 @@
+{
+  "name": "reminiscence-export-renderer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Puppeteer renderer for Reminiscence Note PDF books and image cards",
+  "scripts": {
+    "smoke": "node render.js --help"
+  },
+  "dependencies": {
+    "puppeteer": "^24.0.0"
+  }
+}

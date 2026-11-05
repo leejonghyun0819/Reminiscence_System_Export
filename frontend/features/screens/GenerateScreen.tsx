@@ -8,6 +8,7 @@ import { NoteGenerationPanel } from '../../features/generate/NoteGenerationPanel
 import { MemoryAppHeader } from '../../components/MemoryAppHeader';
 import { MemoryPageHeader } from '../../components/MemoryPageHeader';
 import { memoryColors, memoryLayout } from '../../constants/memoryTheme';
+import { ExportModal } from '../export/ExportModal';
 
 export default function GenerateScreen({ mobile = false }: { mobile?: boolean }) {
     const {
@@ -27,6 +28,7 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
     const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
     const [sessionNoteIds, setSessionNoteIds] = useState<Set<string>>(new Set());
     const [showBuilder, setShowBuilder] = useState(true);
+    const [exportOpen, setExportOpen] = useState(false);
 
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState('');
@@ -262,6 +264,12 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
                                             <Text style={styles.printBtnText}>인쇄 / PDF</Text>
                                         </TouchableOpacity>
                                     ) : null}
+
+                                    {activeNote ? (
+                                        <TouchableOpacity style={styles.exportBtn} onPress={() => setExportOpen(true)}>
+                                            <Text style={styles.exportBtnText}>내보내기</Text>
+                                        </TouchableOpacity>
+                                    ) : null}
                                 </>
                             ) : null}
                         </View>
@@ -325,6 +333,12 @@ export default function GenerateScreen({ mobile = false }: { mobile?: boolean })
                     </View>
                 </View>
             </ScrollView>
+            <ExportModal
+                visible={exportOpen}
+                note={activeNote}
+                onClose={() => setExportOpen(false)}
+                mobile={mobile}
+            />
         </View>
     );
 }
@@ -439,6 +453,13 @@ const styles = StyleSheet.create({
         color: memoryColors.textSecondary,
         fontWeight: '700',
     },
+    exportBtn: {
+        paddingVertical: 9,
+        paddingHorizontal: 17,
+        backgroundColor: memoryColors.brand,
+        borderRadius: 8,
+    },
+    exportBtnText: { fontSize: 13, color: '#fff', fontWeight: '800' },
     mainContentContainer: { paddingTop: 16, alignItems: 'center' },
     emptyStateBox: {
         alignItems: 'center',
@@ -455,4 +476,5 @@ const styles = StyleSheet.create({
         maxWidth: 500,
     },
 });
+
 
