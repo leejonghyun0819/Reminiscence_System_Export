@@ -5,9 +5,28 @@ import { Tabs } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
+    const insets = useSafeAreaInsets();
+    const nativeTabBarStyle =
+        Platform.OS === 'android'
+            ? {
+                  height: 64 + insets.bottom,
+                  paddingTop: 7,
+                  paddingBottom: Math.max(insets.bottom, 8),
+                  borderTopColor: '#E2E8F0',
+                  backgroundColor: '#FFFFFF',
+              }
+            : {
+                  height: 84,
+                  paddingTop: 8,
+                  paddingBottom: 12,
+                  borderTopColor: '#E2E8F0',
+                  backgroundColor: '#FFFFFF',
+              };
+
     return (
         <Tabs
             screenOptions={{
@@ -18,13 +37,7 @@ export default function TabLayout() {
                 tabBarStyle:
                     Platform.OS === 'web'
                         ? { display: 'none' }
-                        : {
-                              height: 84,
-                              paddingTop: 8,
-                              paddingBottom: 12,
-                              borderTopColor: '#E2E8F0',
-                              backgroundColor: '#FFFFFF',
-                          },
+                        : nativeTabBarStyle,
                 tabBarLabelStyle: {
                     fontSize: 11,
                     fontWeight: '700',
