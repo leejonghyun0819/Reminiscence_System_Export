@@ -1,6 +1,7 @@
 // frontend/context/MemoryContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { MemoryContextData } from '../types/memoryContext';
+import { PhotoMetadataItem } from '../types/photoMetadata';
 import {
     API_BASE_URL as BACKEND_URL,
     resolveBackendMediaUrls,
@@ -64,6 +65,7 @@ export interface InterviewData {
     visualClues: string[];
     questions: InterviewQAItem[];
     memoryContext?: MemoryContextData;
+    photoMetadata?: PhotoMetadataItem[];
 }
 
 export type AnalysisVersion = MemoryHistoryItem;
