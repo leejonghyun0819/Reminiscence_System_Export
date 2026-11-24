@@ -1,26 +1,37 @@
 import { Platform } from 'react-native';
 
-const DEFAULT_API_URL = 'http://localhost:8000';
+const BACKEND_STORED_API_URL = 'http://localhost:8000';
+const ANDROID_EMULATOR_API_URL = 'http://10.0.2.2:8000';
+const DEFAULT_API_URL =
+    Platform.OS === 'android' ? ANDROID_EMULATOR_API_URL : BACKEND_STORED_API_URL;
 const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 
 /**
- * Web and the iOS simulator can use localhost. A physical iPhone must set
- * EXPO_PUBLIC_API_URL to the Mac's LAN address (for example 192.168.0.10).
+ * Web and the iOS simulator can use localhost.
+ * The Android Studio emulator reaches the host machine through 10.0.2.2.
+ * A physical phone must set EXPO_PUBLIC_API_URL to the computer's LAN address.
  */
 export const API_BASE_URL = (configuredApiUrl || DEFAULT_API_URL).replace(/\/$/, '');
 
 if (__DEV__ && Platform.OS !== 'web' && !configuredApiUrl) {
-    console.warn(
-        '[API] EXPO_PUBLIC_API_URL is not set. localhost works in the iOS simulator, ' +
-            'but a physical iPhone needs the Mac LAN address in frontend/.env.local.',
-    );
+    if (Platform.OS === 'android') {
+        console.info(
+            '[API] Android emulator mode: using http://10.0.2.2:8000. ' +
+                'For a physical Android phone, set EXPO_PUBLIC_API_URL to the computer LAN address.',
+        );
+    } else {
+        console.warn(
+            '[API] EXPO_PUBLIC_API_URL is not set. localhost works in the iOS simulator, ' +
+                'but a physical iPhone needs the Mac LAN address in frontend/.env.local.',
+        );
+    }
 }
 
 export function apiUrl(path: string): string {
     return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-/** Rebase legacy absolute localhost URLs returned by the backend for a phone. */
+/** Rebase legacy absolute localhost URLs returned by the backend for a phone or emulator. */
 export function resolveBackendMediaUrl(value: string): string {
     if (!value) return value;
 
@@ -36,9 +47,9 @@ export function resolveBackendMediaUrl(value: string): string {
  * Convert a rebased UI URL back before endpoints that compare URL strings.
  */
 export function toBackendStoredMediaUrl(value: string): string {
-    if (!value || API_BASE_URL === DEFAULT_API_URL) return value;
+    if (!value || API_BASE_URL === BACKEND_STORED_API_URL) return value;
     if (value.startsWith(`${API_BASE_URL}/`)) {
-        return `${DEFAULT_API_URL}${value.slice(API_BASE_URL.length)}`;
+        return `${BACKEND_STORED_API_URL}${value.slice(API_BASE_URL.length)}`;
     }
     return value;
 }
