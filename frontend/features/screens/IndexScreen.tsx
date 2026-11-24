@@ -1,5 +1,5 @@
 // Shared memory collection screen used by web and native route entries.
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -73,6 +73,33 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
     const [selectedAlbumIds, setSelectedAlbumIds] = useState<Set<string>>(new Set());
 
     const imageInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (Platform.OS !== 'android') return;
+
+        let mounted = true;
+        ImagePicker.getPendingResultAsync()
+            .then((result) => {
+                if (
+                    !mounted ||
+                    !result ||
+                    'code' in result ||
+                    result.canceled ||
+                    !result.assets
+                ) {
+                    return;
+                }
+                const recoveredAssets = result.assets;
+                setSelectedImages((prev) => [...prev, ...recoveredAssets]);
+            })
+            .catch((error) => {
+                console.warn('[ImagePicker] Android pending selection recovery failed:', error);
+            });
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
     const audioInputRef = useRef<HTMLInputElement | null>(null);
     const pageScrollRef = useRef<ScrollView | null>(null);
 

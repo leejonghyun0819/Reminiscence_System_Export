@@ -38,8 +38,12 @@
     "ios:clear": "expo start --ios --clear",
     "web": "expo start --web",
     "web:clear": "expo start --web --clear",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "android:clear": "expo start --android --clear",
+    "android:lan": "expo start --lan",
+    "android:tunnel": "expo start --tunnel",
+    "build:android:preview": "npx eas-cli build --platform android --profile preview",
+    "build:android:production": "npx eas-cli build --platform android --profile production"
   },
   "private": true
 }
-
