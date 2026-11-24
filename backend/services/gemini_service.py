@@ -722,6 +722,7 @@ async def generate_memory_interview(
     photo_analyses: Optional[list[dict]] = None,
     memory_mode: str = "childhood",
     memory_context: Optional[dict] = None,
+    photo_metadata: Optional[list[dict]] = None,
 ) -> dict:
 
     parts: List[types.Part] = []
@@ -750,6 +751,7 @@ async def generate_memory_interview(
                     for index, _ in indexed_images
                 ],
                 memory_context=memory_context,
+                photo_metadata=photo_metadata,
             )
         )
     )
@@ -781,6 +783,10 @@ async def generate_memory_interview(
     normalized_result[
         "memoryContext"
     ] = memory_context or {}
+
+    normalized_result[
+        "photoMetadata"
+    ] = photo_metadata or []
 
     return normalized_result
 
@@ -1534,6 +1540,7 @@ async def generate_memory_interview_batch(
     photo_analyses: list[dict],
     memory_mode: str = "childhood",
     memory_context: Optional[dict] = None,
+    photo_metadata: Optional[list[dict]] = None,
 ) -> dict:
 
     total_count = len(
@@ -1574,6 +1581,7 @@ async def generate_memory_interview_batch(
                     for index, _ in indexed_images
                 ],
                 memory_context=memory_context,
+                photo_metadata=photo_metadata,
             )
         )
     )
@@ -1605,6 +1613,10 @@ async def generate_memory_interview_batch(
         normalized_result[
             "memoryContext"
         ] = memory_context or {}
+
+        normalized_result[
+            "photoMetadata"
+        ] = photo_metadata or []
 
         return normalized_result
 
@@ -1646,6 +1658,8 @@ async def generate_memory_interview_batch(
             ],
 
             "memoryContext": memory_context or {},
+
+            "photoMetadata": photo_metadata or [],
 
             "interviewQuestions": [
                 {

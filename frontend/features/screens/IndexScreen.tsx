@@ -115,6 +115,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
             allowsMultipleSelection: true,
             quality: 0.8,
             base64: true,
+            exif: true,
         });
         if (!result.canceled && result.assets) {
             setSelectedImages((prev) => [...prev, ...result.assets]);
@@ -190,6 +191,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
             return {
                 base64: image.base64.includes(',') ? image.base64.split(',')[1] : image.base64,
                 mimeType: image.mimeType || 'image/jpeg',
+                exif: image.exif || null,
             };
         }
 
@@ -339,6 +341,7 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 visualClues: interviewData.visualClues,
                 questions: qaPairs,
                 memoryContext: interviewData.memoryContext || {},
+                photoMetadata: interviewData.photoMetadata || [],
             };
 
             if (activeEditingMemory) {
