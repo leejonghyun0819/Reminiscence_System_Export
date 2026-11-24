@@ -31,6 +31,10 @@ from services.gemini_service import (
 from utils.file_utils import (
     find_album_folder_path,
 )
+from utils.photo_metadata import (
+    extract_photo_metadata_batch,
+    merge_photo_metadata,
+)
 
 
 router = APIRouter(
@@ -48,6 +52,7 @@ class ImageItem(BaseModel):
     mimeType: str = (
         "image/jpeg"
     )
+    exif: Optional[dict] = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -224,7 +229,8 @@ def _image_items_to_payload(
             "mimeType": (
                 image.mimeType
                 or "image/jpeg"
-            )
+            ),
+            "exif": image.exif or {},
         }
         for image in images
     ]
@@ -396,6 +402,54 @@ def _collect_album_images(
     return sorted(
         image_files
     )
+
+
+def _read_album_photo_metadata(
+    album_folder: Optional[str]
+) -> list[dict]:
+    if not album_folder:
+        return []
+
+    meta_path = os.path.join(
+        album_folder,
+        "album_meta.json"
+    )
+
+    if not os.path.isfile(meta_path):
+        return []
+
+    try:
+        with open(
+            meta_path,
+            "r",
+            encoding="utf-8"
+        ) as file:
+            meta = json.load(file)
+
+        interview_data = meta.get(
+            "interviewData",
+            {}
+        )
+
+        if not isinstance(interview_data, dict):
+            return []
+
+        photo_metadata = interview_data.get(
+            "photoMetadata",
+            []
+        )
+
+        return (
+            photo_metadata
+            if isinstance(photo_metadata, list)
+            else []
+        )
+    except Exception as e:
+        print(
+            "⚠️ 저장된 촬영 메타데이터 로딩 실패: "
+            f"{type(e).__name__}"
+        )
+        return []
 
 
 def _read_album_memory_context(
@@ -628,6 +682,12 @@ async def generate_interview_endpoint(
             )
         )
 
+        photo_metadata = (
+            extract_photo_metadata_batch(
+                images_payload
+            )
+        )
+
         result = (
             await generate_memory_interview(
                 images_data=images_payload,
@@ -643,6 +703,7 @@ async def generate_interview_endpoint(
                     if req.memoryContext
                     else {}
                 ),
+                photo_metadata=photo_metadata,
             )
         )
 
@@ -873,6 +934,21 @@ async def generate_interview_from_existing_album(
                 "mimeType": mime_type,
             })
 
+        stored_photo_metadata = (
+            _read_album_photo_metadata(
+                target_album_folder
+            )
+        )
+
+        photo_metadata = (
+            merge_photo_metadata(
+                primary=extract_photo_metadata_batch(
+                    images_payload
+                ),
+                fallback=stored_photo_metadata,
+            )
+        )
+
         # ----------------------------------------------------
         # 전체 사진 분류
         # ----------------------------------------------------
@@ -902,6 +978,9 @@ async def generate_interview_from_existing_album(
                 ),
                 memory_context=(
                     memory_context
+                ),
+                photo_metadata=(
+                    photo_metadata
                 ),
             )
         )
