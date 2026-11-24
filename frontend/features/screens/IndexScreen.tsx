@@ -89,7 +89,8 @@ export default function IndexScreen({ mobile = false }: { mobile?: boolean }) {
                 ) {
                     return;
                 }
-                setSelectedImages((prev) => [...prev, ...result.assets]);
+                const recoveredAssets = result.assets;
+                setSelectedImages((prev) => [...prev, ...recoveredAssets]);
             })
             .catch((error) => {
                 console.warn('[ImagePicker] Android pending selection recovery failed:', error);
