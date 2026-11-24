@@ -313,21 +313,22 @@ def merge_photo_metadata(
 ) -> list[dict[str, Any]]:
     merged: dict[int, dict[str, Any]] = {}
 
-    for source in (fallback or [], primary or []):
-        if not isinstance(source, dict):
-            continue
+    for collection in (fallback or [], primary or []):
+        for source in collection:
+            if not isinstance(source, dict):
+                continue
 
-        try:
-            photo_index = int(source.get("photoIndex"))
-        except (TypeError, ValueError):
-            continue
+            try:
+                photo_index = int(source.get("photoIndex"))
+            except (TypeError, ValueError):
+                continue
 
-        if photo_index < 1:
-            continue
+            if photo_index < 1:
+                continue
 
-        current = merged.get(photo_index, {"photoIndex": photo_index})
-        current.update(source)
-        merged[photo_index] = current
+            current = merged.get(photo_index, {"photoIndex": photo_index})
+            current.update(source)
+            merged[photo_index] = current
 
     return [
         merged[index]
