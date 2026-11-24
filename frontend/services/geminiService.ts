@@ -1,5 +1,14 @@
 import { MemoryContextData } from '../types/memoryContext';
+import {
+    PhotoAnalysisPayload,
+    PhotoMetadataItem,
+} from '../types/photoMetadata';
 import { API_BASE_URL as BASE_URL } from '../config/api';
+
+export type {
+    PhotoAnalysisPayload,
+    PhotoMetadataItem,
+} from '../types/photoMetadata';
 
 export type MemoryMode = 'childhood' | 'travel';
 
@@ -28,6 +37,7 @@ export interface InterviewResponseData {
     interviewQuestions: InterviewQuestionItem[];
     detectedMode?: MemoryMode;
     memoryContext?: MemoryContextData;
+    photoMetadata?: PhotoMetadataItem[];
 }
 
 export interface InterviewAnswerItem {
@@ -90,7 +100,7 @@ async function getErrorMessage(response: Response, fallback: string): Promise<st
 
 // 1. 여행 모드 멀티모달 분석
 export async function analyzeMultiImageMemoryWithGemini(
-    images: Array<{ base64: string; mimeType: string }>,
+    images: PhotoAnalysisPayload[],
     audio?: { base64: string; mimeType?: string },
 ): Promise<any> {
     const response = await fetch(`${BASE_URL}/api/gemini/analyze`, {
