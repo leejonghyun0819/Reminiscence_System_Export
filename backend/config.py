@@ -16,7 +16,7 @@ DB_PATH = os.path.join(BASE_DIR, "database.db")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 YOUCAM_API_KEY = os.getenv("YOUCAM_API_KEY", "")
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-4-neon")
 GEMINI_HTTP_TIMEOUT_MS = int(os.getenv("GEMINI_HTTP_TIMEOUT_MS", "60000"))
 GEMINI_MAX_RETRIES = int(os.getenv("GEMINI_MAX_RETRIES", "2"))
 GEMINI_CLASSIFY_BATCH_SIZE = int(
